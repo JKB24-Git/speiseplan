@@ -1,0 +1,75 @@
+{
+  "week": "05.01.2026 - 09.01.2026",
+  "days": [
+    {
+      "day": "Montag",
+      "lunch": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Russischer Salat", "allergens": ["C", "F", "M"] },
+        { "name": "Kartoffelnocken mit Peperonisauce", "allergens": ["C", "A", "G", "L", "F"] },
+        { "name": "Aprikosenjoghurt", "allergens": ["G"] }
+      ],
+      "dinner": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Russischer Salat", "allergens": ["C", "F", "M"] },
+        { "name": "Eierspätzle mit Wildragout", "allergens": ["C", "A", "L", "F"] },
+        { "name": "Zwetschgenschnitte", "allergens": ["C", "A", "G", "L"] }
+      ]
+    },
+    {
+      "day": "Dienstag",
+      "lunch": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Zucchini vom Grill mit Mozzarelline", "allergens": ["G"] },
+        { "name": "Farfalle mit Vier-Käse-Sauce und Rucola", "allergens": ["A", "G"] },
+        { "name": "Apfelmus", "allergens": ["G"] }
+      ],
+      "dinner": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Zucchini vom Grill mit Mozzarelline", "allergens": ["G"] },
+        { "name": "Hühnerbrust mit Sauce mit Polenta und Brokkoli", "allergens": ["C", "A", "G", "L", "F", "B"] },
+        { "name": "Banane", "allergens": [] }
+      ]
+    },
+    {
+      "day": "Mittwoch",
+      "lunch": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Tramezzinoschnitte", "allergens": ["A", "C", "D", "G", "M"] },
+        { "name": "Gemüselasagne mit Parmesan", "allergens": ["C", "A", "G", "L", "F"] },
+        { "name": "Pfirsichkompott", "allergens": [] }
+      ],
+      "dinner": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Tramezzinoschnitte", "allergens": ["A", "C", "D", "G", "M"] },
+        { "name": "Fusilli mexikanisch (scharfe Salami, Peperoni, Mais)", "allergens": ["A"] },
+        { "name": "Stracciatellacreme", "allergens": ["C", "G"] }
+      ]
+    },
+    {
+      "day": "Donnerstag",
+      "lunch": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Eier", "allergens": ["C"] },
+        { "name": "Champignonschnitzel mit Reis und Mischgemüse", "allergens": ["C", "A", "G", "L"] },
+        { "name": "Birne", "allergens": [] }
+      ],
+      "dinner": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Eier", "allergens": ["C"] },
+        { "name": "Pizzastrudel an Tomatensauce", "allergens": ["A", "G"] },
+        { "name": "Käsesahne-Kuchen", "allergens": ["C", "A", "G"] }
+      ]
+    },
+    {
+      "day": "Freitag",
+      "lunch": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Frühlingsrolle", "allergens": ["C", "F", "L", "N"] },
+        { "name": "Thunfisch mit Bratkartoffel und Ratatuillegemüse", "allergens": ["D"] },
+        { "name": "Obst", "allergens": [] }
+      ],
+      "dinner": []
+    }
+  ]
+}
