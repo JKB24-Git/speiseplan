@@ -1,0 +1,75 @@
+{
+  "week": "12.10.2026 - 16.10.2026",
+  "days": [
+    {
+      "day": "Montag",
+      "lunch": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Griechischer Salat", "allergens": ["G"] },
+        { "name": "Salbeischnitzel mit Kartoffelkroketten und Bohnen", "allergens": ["L", "F", "A", "C"] },
+        { "name": "Trauben", "allergens": [] }
+      ],
+      "dinner": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Griechischer Salat", "allergens": ["G"] },
+        { "name": "Nudel mit Thunfischsauce", "allergens": ["L", "F"] },
+        { "name": "Zitronenschnitte", "allergens": ["C", "A", "G", "L"] }
+      ]
+    },
+    {
+      "day": "Dienstag",
+      "lunch": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Gemüsequiche", "allergens": ["A", "G", "L"] },
+        { "name": "Spinatknödel mit Parmesan und Butter", "allergens": ["C", "A", "G"] },
+        { "name": "Schokoladepudding", "allergens": ["C", "A", "G", "F", "H"] }
+      ],
+      "dinner": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Gemüsequiche", "allergens": ["A", "G", "L"] },
+        { "name": "Leberkäse mit Pommes frittes und Mischgemüse", "allergens": ["M", "F"] },
+        { "name": "Melone", "allergens": [] }
+      ]
+    },
+    {
+      "day": "Mittwoch",
+      "lunch": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Nizzasalat", "allergens": ["D"] },
+        { "name": "Schweinefilet mit Reis und Karotten-Erbsen-Gemüse", "allergens": ["L", "F"] },
+        { "name": "Birnenkompott", "allergens": [] }
+      ],
+      "dinner": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Nizzasalat", "allergens": ["D"] },
+        { "name": "Nudel mit frischen Tomaten, Mozzarella und Pesto", "allergens": ["C", "A", "G", "L", "F"] },
+        { "name": "Schwarzwälderschnitte", "allergens": ["C", "A", "G"] }
+      ]
+    },
+    {
+      "day": "Donnerstag",
+      "lunch": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Grillgemüse", "allergens": [] },
+        { "name": "Forrellenfillet in Weißweinsauce, Kartoffelpüree, Fenchel", "allergens": ["D", "G"] },
+        { "name": "Obstsalat", "allergens": [] }
+      ],
+      "dinner": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Grillgemüse", "allergens": [] },
+        { "name": "Lasagne Bolognese", "allergens": ["A", "C", "G", "L"] },
+        { "name": "Bayrische Creme", "allergens": ["C", "A", "G"] }
+      ]
+    },
+    {
+      "day": "Freitag",
+      "lunch": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Mozzarella-Sticks an Tomatensauce", "allergens": ["A", "C", "G"] },
+        { "name": "Kartoffel-Spinat-Roulade", "allergens": ["A", "C", "G"] },
+        { "name": "Obst", "allergens": [] }
+      ],
+      "dinner": []
+    }
+  ]
+}
