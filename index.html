@@ -21,10 +21,10 @@
         <p id="week-meta" class="week-meta"></p>
       </div>
       <div class="masthead-controls">
-        <label class="allergen-toggle" for="hide-allergens">
-          <input id="hide-allergens" type="checkbox" aria-controls="plan">
-          <span>Allergene</span>
-        </label>
+        <div class="allergen-toggle">
+          <input id="hide-allergens" type="checkbox" aria-label="Allergene anzeigen" aria-controls="plan">
+          <button id="allergen-scroll" class="allergen-scroll" type="button">Allergene</button>
+        </div>
         <nav class="week-nav" aria-label="Woche wählen">
           <button id="prev" type="button" hidden>‹ Vorherige</button>
           <label class="select-wrap">

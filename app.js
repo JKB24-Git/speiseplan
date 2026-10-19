@@ -208,6 +208,7 @@
     legend: $("legend"),
     legendSection: $("allergen-legend"),
     activeAllergens: $("active-allergens"),
+    allergenScroll: $("allergen-scroll"),
     panel: document.querySelector(".panel"),
     mastheadText: document.querySelector(".masthead-text"),
     hideAllergens: $("hide-allergens")
@@ -335,6 +336,7 @@
       chip.setAttribute("aria-pressed", state.selectedAllergens[code] ? "true" : "false");
       chip.title = "Passende Gerichte hervorheben: " + name + ". Doppelklick setzt alle Filter zurück.";
       chip.addEventListener("click", function () {
+        if (suppressAllergenClick) { suppressAllergenClick = false; return; }
         if (state.selectedAllergens[code]) delete state.selectedAllergens[code];
         else state.selectedAllergens[code] = true;
         applyAllergenHighlights();
@@ -342,6 +344,41 @@
     }
     return chip;
   }
+
+  var allergenDrag = null;
+  var suppressAllergenClick = false;
+  function setDraggedAllergen(code, selected) {
+    if (selected) state.selectedAllergens[code] = true;
+    else delete state.selectedAllergens[code];
+    applyAllergenHighlights();
+  }
+  document.addEventListener("pointerdown", function (event) {
+    var chip = event.target.closest && event.target.closest(".al-filter");
+    if (!chip || event.button !== 0) return;
+    var code = chip.getAttribute("data-code");
+    allergenDrag = { start: code, selected: !state.selectedAllergens[code], seen: { [code]: true }, moved: false };
+  });
+  document.addEventListener("pointerover", function (event) {
+    if (!allergenDrag) return;
+    var chip = event.target.closest && event.target.closest(".al-filter");
+    if (!chip) return;
+    var code = chip.getAttribute("data-code");
+    if (allergenDrag.seen[code]) return;
+    allergenDrag.seen[code] = true;
+    allergenDrag.moved = true;
+    setDraggedAllergen(allergenDrag.start, allergenDrag.selected);
+    setDraggedAllergen(code, allergenDrag.selected);
+  });
+  document.addEventListener("pointerup", function () {
+    if (!allergenDrag) return;
+    if (allergenDrag.moved) {
+      setDraggedAllergen(allergenDrag.start, allergenDrag.selected);
+      suppressAllergenClick = true;
+      window.setTimeout(function () { suppressAllergenClick = false; }, 0);
+    }
+    allergenDrag = null;
+  });
+  document.addEventListener("pointercancel", function () { allergenDrag = null; });
 
   function allergenChips(codes) {
     var wrap = el("div", "allergens");
@@ -609,24 +646,23 @@
     var occurrences = dishOccurrences(name);
     var past = occurrences.filter(function (item) { return item.happened; });
     dialog.historySummary.textContent = past.length
-      ? past.length + "× · zuletzt " + formatShort(past[past.length - 1].date)
+      ? past.length + "× · zuletzt am " + formatShort(past[past.length - 1].date)
       : "Bisher noch nicht eingeplant";
     dialog.historyList.textContent = "";
-    if (!occurrences.length) {
+    if (!past.length) {
       dialog.historyList.appendChild(el("li", "detail-history-empty", "Für dieses Schuljahr sind keine Vorkommen in den verfügbaren Wochenplänen gefunden worden."));
       return;
     }
-    occurrences.slice().reverse().forEach(function (occurrence) {
+    past.slice().reverse().forEach(function (occurrence) {
       var li = el("li");
       var button = el("button", "detail-history-entry");
       button.type = "button";
-      button.title = occurrence.dayName + ", " + formatDate(occurrence.date) + " · " + occurrence.mealLabel + (occurrence.happened ? " · im Plan gewesen" : " · geplant");
+      button.title = occurrence.dayName + ", " + formatDate(occurrence.date) + " · " + (occurrence.mealKey === "lunch" ? "Mittag" : "Abend");
       button.setAttribute("aria-label", button.title + ". Zum Termin springen.");
       button.appendChild(el("span", "history-day", occurrence.dayName.slice(0, 2)));
       button.appendChild(el("span", "history-date", formatShort(occurrence.date)));
-      button.appendChild(el("span", "history-meal", occurrence.mealKey === "lunch" ? "M" : "A"));
-      if (!occurrence.happened) button.appendChild(el("small", "history-planned", "geplant"));
-      button.addEventListener("click", function () { navigateToOccurrence(occurrences, occurrence); });
+      button.appendChild(el("span", "history-meal", occurrence.mealKey === "lunch" ? "Mittag" : "Abend"));
+      button.addEventListener("click", function () { navigateToOccurrence(past, occurrence); });
       li.appendChild(button);
       dialog.historyList.appendChild(li);
     });
@@ -980,6 +1016,7 @@
   function applyAllergenHighlights() {
     var selected = Object.keys(state.selectedAllergens);
     document.body.classList.toggle("has-allergen-filter", selected.length > 0);
+    document.body.classList.toggle("has-active-allergen-bar", selected.length > 0);
 
     document.querySelectorAll(".al[data-code]").forEach(function (chip) {
       var active = selected.indexOf(chip.getAttribute("data-code")) >= 0;
@@ -1009,8 +1046,7 @@
       pill.title = allergen.name + " aus der Auswahl entfernen";
       pill.setAttribute("aria-label", allergen.name + " abwählen");
       pill.appendChild(makeChip(allergen.code, false, false));
-      pill.appendChild(el("span", "", allergen.name));
-      pill.appendChild(el("span", "active-allergen-remove", "×"));
+      pill.appendChild(el("span", "active-allergen-name", allergen.name));
       pill.addEventListener("click", function () {
         delete state.selectedAllergens[allergen.code];
         applyAllergenHighlights();
@@ -1018,6 +1054,10 @@
       ui.activeAllergens.appendChild(pill);
     });
     ui.activeAllergens.hidden = count === 0;
+    ui.activeAllergens.classList.remove("is-compact");
+    if (count) requestAnimationFrame(function () {
+      ui.activeAllergens.classList.toggle("is-compact", ui.activeAllergens.scrollWidth > ui.activeAllergens.clientWidth + 1);
+    });
   }
 
   function initAllergenVisibility() {
@@ -1027,11 +1067,10 @@
     if (!ui.hideAllergens) return;
     ui.hideAllergens.checked = !state.hideAllergens;
     document.body.classList.toggle("hide-allergens", state.hideAllergens);
-    var allergenToggle = ui.hideAllergens.closest(".allergen-toggle");
-    if (allergenToggle && ui.legendSection) {
-      allergenToggle.addEventListener("click", function (event) {
-        if (event.target === ui.hideAllergens) return;
-        ui.legendSection.scrollIntoView({ block: "start", behavior: reduceMotion() ? "auto" : "smooth" });
+    if (ui.allergenScroll && ui.legendSection) {
+      ui.allergenScroll.addEventListener("click", function () {
+        var top = ui.legendSection.getBoundingClientRect().top + window.scrollY - 16;
+        window.scrollTo({ top: Math.max(0, top), behavior: reduceMotion() ? "auto" : "smooth" });
       });
     }
     ui.hideAllergens.addEventListener("change", function () {
