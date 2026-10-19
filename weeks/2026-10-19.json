@@ -1,0 +1,75 @@
+{
+  "week": "19.10.2026 - 23.10.2026",
+  "days": [
+    {
+      "day": "Montag",
+      "lunch": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Mozzarella und Tomaten", "allergens": ["G"] },
+        { "name": "Kalbsrahmgoulash mit Reis und Blumenkohl", "allergens": ["L", "F"] },
+        { "name": "Pflaumen", "allergens": [] }
+      ],
+      "dinner": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Mozzarella und Tomaten", "allergens": ["G"] },
+        { "name": "Nudel mit Amatriciana Sauce", "allergens": ["A", "C", "L", "F"] },
+        { "name": "Sacherschnitte", "allergens": ["C", "A", "G", "F"] }
+      ]
+    },
+    {
+      "day": "Dienstag",
+      "lunch": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Reissalat", "allergens": ["D", "N", "F"] },
+        { "name": "Vollkornnudel mit Vier-Käse-Sauce und Rucola", "allergens": ["A", "G"] },
+        { "name": "Apfelstrudel", "allergens": ["A", "C", "G"] }
+      ],
+      "dinner": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Reissalat", "allergens": ["D", "N", "F"] },
+        { "name": "Hühnerkeule mit Wedgeskartoffeln und Peperonata", "allergens": ["F", "M", "N"] },
+        { "name": "Banane", "allergens": [] }
+      ]
+    },
+    {
+      "day": "Mittwoch",
+      "lunch": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Piadinaschnitte", "allergens": ["A", "C", "G", "M", "N"] },
+        { "name": "Heilbuttfilet mit Salzkartoffel und Zucchini", "allergens": ["A", "D"] },
+        { "name": "Ananaskompott", "allergens": [] }
+      ],
+      "dinner": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Piadinaschnitte", "allergens": ["A", "C", "G", "M", "N"] },
+        { "name": "Käseknödel mit Butter und Parmesan", "allergens": ["A", "C", "G"] },
+        { "name": "Kastanienschnitte", "allergens": ["C", "A", "G", "H"] }
+      ]
+    },
+    {
+      "day": "Donnerstag",
+      "lunch": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Russischer Salat", "allergens": ["C", "F", "M"] },
+        { "name": "Naturschnitzel vom Grill mit Tex-Mexkartoffel und Mischgemüse", "allergens": ["A", "C", "G"] },
+        { "name": "Jogurt", "allergens": ["G"] }
+      ],
+      "dinner": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Russischer Salat", "allergens": ["C", "F", "M"] },
+        { "name": "Chonchigilie-Nudel mit Oktopus, Tomatensauce und Oliven", "allergens": ["A", "L", "F", "D", "N"] },
+        { "name": "Schokoladenmousse", "allergens": ["C", "G"] }
+      ]
+    },
+    {
+      "day": "Freitag",
+      "lunch": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Pizzastrudel", "allergens": ["A", "G"] },
+        { "name": "Safranrisotto mit Geflügelragout", "allergens": ["G"] },
+        { "name": "Obst", "allergens": [] }
+      ],
+      "dinner": []
+    }
+  ]
+}
