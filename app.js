@@ -208,6 +208,8 @@
     legend: $("legend"),
     legendSection: $("allergen-legend"),
     activeAllergens: $("active-allergens"),
+    bottomDock: $("bottom-dock"),
+    historyReturn: $("history-return"),
     allergenScroll: $("allergen-scroll"),
     panel: document.querySelector(".panel"),
     mastheadText: document.querySelector(".masthead-text"),
@@ -261,11 +263,12 @@
      ------------------------------------------------------------ */
   function syncNoticeStickyHeight() {
     if (ui.notice.hidden) {
+      document.body.classList.remove("has-notice");
       document.documentElement.style.setProperty("--notice-sticky-height", "0px");
       return;
     }
-    var marginTop = parseFloat(window.getComputedStyle(ui.notice).marginTop) || 0;
-    document.documentElement.style.setProperty("--notice-sticky-height", (ui.notice.offsetHeight + marginTop) + "px");
+    document.body.classList.add("has-notice");
+    document.documentElement.style.setProperty("--notice-sticky-height", ui.notice.offsetHeight + "px");
   }
 
   function showNotice(message, linkText, linkHref, actionText, action) {
@@ -624,15 +627,15 @@
         ? "Zum späteren Termin in dieser Woche weitergeleitet (" + formatDate(destination.date) + ")."
         : "Zum Termin in dieser Woche weitergeleitet (" + formatDate(destination.date) + ").")
       : "Zur Woche ab " + formatDate(mondayOf(destination.date)) + " weitergeleitet (" + formatDate(destination.date) + ").";
-    state.historyReturn = { origin: origin, name: origin.name };
+    if (!state.historyReturn) state.historyReturn = { origin: origin, name: origin.name };
     state.pendingNavigation = {
       week: stem(destination.file),
       date: destination.dateKey,
       mealKey: destination.mealKey,
       message: message,
-      returnMenu: true,
       historyHighlight: true
     };
+    renderActiveAllergens();
     closeDetail();
     if (location.hash.replace(/^#/, "") === state.pendingNavigation.week) route();
     else location.hash = state.pendingNavigation.week;
@@ -645,7 +648,6 @@
       week: origin.week,
       date: origin.date,
       mealKey: origin.mealKey,
-      message: "Zurück zum Menü.",
       restoreMenu: true
     };
     if (location.hash.replace(/^#/, "") === origin.week) route();
@@ -691,20 +693,19 @@
       group.meals.sort(function (a, b) {
         return (a.mealKey === "lunch" ? 0 : 1) - (b.mealKey === "lunch" ? 0 : 1);
       });
-      var li = el("li", "history-date-entry");
-      li.appendChild(el("span", "history-day", group.dayName.slice(0, 2)));
-      li.appendChild(el("span", "history-date", formatShort(group.date)));
-      var mealLinks = el("div", "history-meals");
+      var li = el("li");
       group.meals.forEach(function (occurrence) {
-        var button = el("button", "history-meal");
+        var button = el("button", "history-date-entry");
         button.type = "button";
-        button.textContent = occurrence.mealKey === "lunch" ? "Mittag" : "Abend";
-        button.title = occurrence.dayName + ", " + formatDate(occurrence.date) + " · " + button.textContent;
-        button.setAttribute("aria-label", button.title + ". Zum Termin springen.");
+        var mealName = occurrence.mealKey === "lunch" ? "Mittag" : "Abend";
+        button.title = occurrence.dayName + ", " + formatDate(occurrence.date) + " · " + mealName + ". Zum Termin springen.";
+        button.setAttribute("aria-label", button.title);
+        button.appendChild(el("span", "history-day", group.dayName.slice(0, 2)));
+        button.appendChild(el("span", "history-date", formatShort(group.date)));
+        button.appendChild(el("span", "history-meal-label", mealName));
         button.addEventListener("click", function () { navigateToOccurrence(occurrences, occurrence); });
-        mealLinks.appendChild(button);
+        li.appendChild(button);
       });
-      li.appendChild(mealLinks);
       dialog.historyList.appendChild(li);
     });
   }
@@ -1068,7 +1069,6 @@
   function applyAllergenHighlights() {
     var selected = Object.keys(state.selectedAllergens);
     document.body.classList.toggle("has-allergen-filter", selected.length > 0);
-    document.body.classList.toggle("has-active-allergen-bar", selected.length > 0);
 
     document.querySelectorAll(".al[data-code]").forEach(function (chip) {
       var active = selected.indexOf(chip.getAttribute("data-code")) >= 0;
@@ -1105,13 +1105,20 @@
       ui.activeAllergens.appendChild(pill);
     });
     if (count) {
-      var clear = el("button", "active-allergen-clear", "Alle aus");
+      var clear = el("button", "active-allergen-clear", "×");
       clear.type = "button";
       clear.setAttribute("aria-label", "Alle Allergene abwählen");
+      clear.title = "Alle Allergene abwählen";
       clear.addEventListener("click", function () { state.selectedAllergens = {}; applyAllergenHighlights(); });
       ui.activeAllergens.appendChild(clear);
     }
     ui.activeAllergens.hidden = count === 0;
+    if (ui.historyReturn && ui.bottomDock) {
+      ui.historyReturn.hidden = !state.historyReturn;
+      ui.bottomDock.classList.toggle("has-history-return", !!state.historyReturn);
+      ui.bottomDock.hidden = count === 0 && !state.historyReturn;
+      document.body.classList.toggle("has-bottom-dock", count > 0 || !!state.historyReturn);
+    }
     ui.activeAllergens.classList.remove("is-compact");
     if (count) ui.activeAllergens.classList.toggle("is-compact", ui.activeAllergens.scrollWidth > ui.activeAllergens.clientWidth + 1);
   }
@@ -1121,6 +1128,7 @@
     try { saved = window.localStorage.getItem("speiseplan-hide-allergens"); } catch (e) { /* privater Modus */ }
     state.hideAllergens = saved === null ? true : saved === "true";
     if (!ui.hideAllergens) return;
+    if (ui.historyReturn) ui.historyReturn.addEventListener("click", returnToHistoryMenu);
     ui.hideAllergens.checked = !state.hideAllergens;
     document.body.classList.toggle("hide-allergens", state.hideAllergens);
     if (ui.allergenScroll && ui.legendSection) {
@@ -1185,13 +1193,8 @@
         var pending = state.pendingNavigation;
         if (pending && pending.week === stem(file)) {
           state.pendingNavigation = null;
-          showNotice(
-            pending.message,
-            null,
-            null,
-            pending.returnMenu ? "Zurück zum Menü" : null,
-            pending.returnMenu ? returnToHistoryMenu : null
-          );
+          if (pending.restoreMenu) showNotice("");
+          else showNotice(pending.message || "");
           var target = ui.plan.querySelector('.day[data-day-date="' + pending.date + '"] .meal-' + pending.mealKey);
           if (target) {
             if (pending.historyHighlight) {
@@ -1202,8 +1205,9 @@
             target.scrollIntoView({ block: "center", behavior: reduceMotion() ? "auto" : "smooth" });
             if (pending.restoreMenu) {
               var returnDish = target.querySelector(".dish-main");
-              if (returnDish) returnDish.click();
               state.historyReturn = null;
+              if (returnDish) returnDish.click();
+              renderActiveAllergens();
             }
           }
         } else if (wasFirstView) {

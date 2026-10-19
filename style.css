@@ -291,6 +291,7 @@ body {
   border-bottom: 2px solid var(--divider);
   transition: opacity 0.18s ease, transform 0.18s ease;
 }
+.has-notice .panel { margin-top: 0; }
 
 /* Kurzes Überblenden beim Wechsel der Woche (siehe app.js: renderWeekAnimated) */
 .panel.is-changing { opacity: 0; transform: translateY(6px); }
@@ -820,6 +821,7 @@ body.detail-open { overflow: hidden; }
 .detail-history h4 { margin: 0 0 0.35rem; font-size: 1.05rem; }
 .detail-history-summary { margin: 0 0 0.65rem; color: var(--muted); }
 .detail-history-list { list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; max-height: 13rem; overflow-y: auto; margin: 0; padding: 0; }
+.detail-history-list > li { display: flex; flex-wrap: nowrap; gap: 0.35rem; }
 .history-date-entry {
   display: inline-flex;
   align-items: center;
@@ -830,42 +832,92 @@ body.detail-open { overflow: hidden; }
   border-radius: 0.5rem;
   background: var(--bg);
   color: var(--ink);
-}
-.history-day { color: var(--muted); font-size: 0.75rem; font-weight: 700; }
-.history-date { font-size: 0.8rem; font-weight: 700; font-variant-numeric: tabular-nums; }
-.history-meals { display: inline-flex; align-items: center; gap: 0.25rem; }
-.history-meal {
-  min-height: 1.7rem;
-  padding: 0.1rem 0.35rem;
-  border: 1px solid var(--rule);
-  border-radius: 0.35rem;
-  background: var(--surface);
-  color: var(--muted);
   font: inherit;
-  font-size: 0.7rem;
-  font-weight: 600;
+  font-size: 0.85rem;
+  text-align: left;
   cursor: pointer;
 }
-.history-meal:hover { border-color: var(--next-accent); background: var(--next-bg); color: var(--ink); }
-.meal.is-history-target { border: 2px solid #4e8fc9; border-radius: 0.75rem; background: transparent; box-shadow: none; }
-.meal.is-history-target .history-target { background: transparent; border-radius: 0; box-shadow: none; }
+.history-date-entry:hover { border-color: var(--next-accent); background: var(--next-bg); }
+.history-day { color: var(--muted); font-size: 0.75rem; font-weight: 700; }
+.history-date { font-size: 0.8rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.history-meal-label { color: var(--muted); font-size: 0.72rem; font-weight: 600; }
 
-.active-allergens {
+.bottom-dock {
   position: fixed;
   z-index: 25;
   left: 50%;
   bottom: max(0.7rem, env(safe-area-inset-bottom));
   display: flex;
-  flex-wrap: nowrap;
+  align-items: center;
   justify-content: center;
   gap: 0.45rem;
+  width: max-content;
+  max-width: 96vw;
+  transform: translateX(-50%);
+}
+.bottom-dock.has-history-return .active-allergens { max-width: calc(96vw - 8rem); }
+.history-return {
+  flex: 0 0 auto;
+  min-height: 2.25rem;
+  padding: 0.3rem 0.65rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.history-return:hover { border-color: var(--strong); background: var(--surface); }
+.active-allergens {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  position: static;
+  z-index: auto;
+  left: auto;
+  bottom: auto;
+  flex: 0 1 auto;
+  min-width: 0;
   width: max-content;
   max-width: min(92vw, 48rem);
   overflow-x: auto;
   overflow-y: hidden;
   padding: 0.1rem 0;
-  transform: translateX(-50%);
+  transform: none;
 }
+.active-allergen-clear {
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 2rem;
+  min-height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #c62828;
+  font: inherit;
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+.active-allergen-clear:hover { background: rgba(198, 40, 40, 0.1); }
+body.has-bottom-dock { padding-bottom: calc(4rem + env(safe-area-inset-bottom)); }
+
+/* Redirect targets use the same rounded frame as the next meal, in blue. */
+.meal.is-history-target { border: 2px solid #4e8fc9; border-radius: 0.75rem; background: transparent; box-shadow: none; }
+.meal.is-history-target .history-target { background: transparent; border-radius: 0; box-shadow: none; }
+
+@media (prefers-color-scheme: dark) {
+  .meal.is-history-target { border-color: #70a9df; background: transparent; }
+}
+
+/* The dock stays compact beside the return control. */
+.active-allergens.is-compact .active-allergen-name { display: none; }
 .active-allergen-pill {
   display: inline-flex;
   align-items: center;
@@ -884,26 +936,6 @@ body.detail-open { overflow: hidden; }
 }
 .active-allergen-pill:hover { border-color: var(--strong); }
 .active-allergen-pill .al { width: 1.4rem; height: 1.4rem; min-width: 1.4rem; }
-.active-allergens.is-compact .active-allergen-name { display: none; }
-.active-allergen-clear {
-  flex: 0 0 auto;
-  min-height: 2.25rem;
-  padding: 0.25rem 0.55rem;
-  border: 1px solid var(--strong);
-  border-radius: 999px;
-  background: var(--surface);
-  color: var(--ink);
-  font: inherit;
-  font-size: 0.8rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-.active-allergen-clear:hover { background: var(--divider); }
-body.has-active-allergen-bar { padding-bottom: calc(4rem + env(safe-area-inset-bottom)); }
-
-@media (prefers-color-scheme: dark) {
-  .meal.is-history-target { border-color: #70a9df; background: transparent; }
-}
 
 @media (max-width: 859px) {
   .detail-dialog { max-height: calc(100vh - 1.25rem); padding: 1.1rem 1.1rem 2.5rem; }
