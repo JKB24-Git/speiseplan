@@ -16,6 +16,12 @@
   --today-block-ink: #ffffff;
   --today-tag-bg: #ffffff;
   --today-tag-ink: #111111;
+  --next-bg: #f3f6ed;
+  --next-accent: #58723a;
+  --main-bg: #f5f5f5;
+  --main-accent: #444444;
+  --allergen-muted: #d9d9d9;
+  --allergen-match: #a31717;
   --day-divider: #777777;
   --detail-link-color: #555555;
   --chip-bg: #e6e6e6;       /* Allergene ohne eigene Farbe */
@@ -54,6 +60,12 @@
     --today-block-ink: #ffffff;
     --today-tag-bg: #1a1a1a;
     --today-tag-ink: #ffffff;
+    --next-bg: #1b2416;
+    --next-accent: #a7c77c;
+    --main-bg: #1c1c1c;
+    --main-accent: #b8b8b8;
+    --allergen-muted: #424242;
+    --allergen-match: #ff8585;
     --day-divider: #777777;
     --detail-link-color: #bdbdbd;
     --chip-bg: #2c2c2c;
@@ -131,6 +143,35 @@ body {
   gap: 1.25rem 2rem;
 }
 
+.masthead-text {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.masthead-text.is-changing { opacity: 0; transform: translateY(6px); }
+
+.masthead-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.6rem;
+}
+
+.allergen-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--mast-ink);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.allergen-toggle input {
+  width: 1.05rem;
+  height: 1.05rem;
+  margin: 0;
+  accent-color: #a7c77c;
+  cursor: pointer;
+}
+
 .masthead h1 {
   margin: 0;
   font-size: clamp(2.25rem, 7vw, 3.5rem);
@@ -158,6 +199,11 @@ body {
   flex-wrap: wrap;
   gap: 0.5rem;
   align-items: stretch;
+}
+
+@media (max-width: 859px) {
+  .masthead-controls { width: 100%; align-items: stretch; }
+  .allergen-toggle { align-self: flex-end; }
 }
 
 .week-nav button,
@@ -215,6 +261,7 @@ body {
 
 /* Kurzes Überblenden beim Wechsel der Woche (siehe app.js: renderWeekAnimated) */
 .panel.is-changing { opacity: 0; transform: translateY(6px); }
+.masthead-text.is-changing { pointer-events: none; }
 
 /* Die Leiste "Mittagessen | Abendessen" oben ist nur bei der PC-Tabelle sichtbar (siehe unten) */
 .grid-head { display: none; }
@@ -229,6 +276,8 @@ body {
 
 /* Heutiger Tag: getönte Zeile und ein dunkler Block hinter dem Tagesnamen */
 .day.is-today { background: var(--today-bg); }
+/* The bottom divider touches today's highlight instead of leaving a white gap. */
+.day.is-today + .day { margin-top: 0; }
 
 .day-head {
   display: flex;
@@ -278,10 +327,14 @@ body {
 
 /* Zeitlich nächste veröffentlichte Mahlzeit */
 .meal.is-next {
-  outline: 1px solid var(--divider);
-  outline-offset: 4px;
-  border-radius: 4px;
+  position: relative;
+  padding: 0.9rem 1rem 1rem 1.15rem;
+  border-radius: 0.65rem;
+  background: var(--next-bg);
+  box-shadow: inset 4px 0 0 var(--next-accent), 0 2px 10px rgba(0, 0, 0, 0.08);
+  scroll-margin-top: 7rem;
 }
+.meal.is-next .meal-label { border-color: var(--next-accent); }
 
 .meal-label {
   margin: 0 0 0.5rem;
@@ -307,6 +360,15 @@ body {
 }
 
 .dishes li + li { margin-top: 0.7rem; }
+
+/* Make the main dish easy to spot without adding another badge or label. */
+.dishes li.is-main {
+  margin-left: -0.6rem;
+  padding: 0.4rem 0.6rem;
+  border-left: 3px solid var(--main-accent);
+  border-radius: 0 0.4rem 0.4rem 0;
+  background: var(--main-bg);
+}
 
 .dish {
   font-family: inherit;
@@ -432,6 +494,24 @@ button.dish-detail:hover { color: var(--muted); }
 .al:not([style]) { box-shadow: inset 0 0 0 1px var(--chip-line); }   /* Allergene ohne eigene Farbe */
 .day.is-today .al:not([style]) { background: var(--surface); }
 
+/* Selecting one or more allergens keeps those chips colored and dims the rest. */
+.has-allergen-filter .al.is-muted {
+  background-color: var(--allergen-muted) !important;
+  color: var(--muted) !important;
+  box-shadow: inset 0 0 0 1px var(--rule) !important;
+}
+.has-allergen-filter .al.is-selected:not([style]) {
+  background-color: #ffffff !important;
+  color: #111111 !important;
+  box-shadow: inset 0 0 0 2px var(--next-accent) !important;
+}
+.al-filter { cursor: pointer; }
+.al-filter[aria-pressed="true"] { transform: scale(1.06); }
+.dishes li.has-allergen-match > .dish { color: var(--allergen-match); }
+
+/* Hide meal/detail chips when requested; the clickable legend remains available. */
+body.hide-allergens .allergens { display: none; }
+
 .al-unknown { outline: 2px dashed var(--muted); outline-offset: -2px; }
 
 .empty {
@@ -442,6 +522,7 @@ button.dish-detail:hover { color: var(--muted); }
 
 /* ---------- Legende ---------- */
 .legend { margin: 2rem 0 0; padding-bottom: 3rem; }
+.legend-help { margin: -0.25rem 0 0.85rem; color: var(--muted); font-size: 0.9rem; }
 
 .legend h2 {
   margin: 0 0 0.75rem;

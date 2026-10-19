@@ -20,14 +20,20 @@
         <p id="week-label" class="week-label">Wird geladen …</p>
         <p id="week-meta" class="week-meta"></p>
       </div>
-      <nav class="week-nav" aria-label="Woche wählen">
-        <button id="prev" type="button" hidden>‹ Vorherige</button>
-        <label class="select-wrap">
-          <span class="sr">Woche wählen</span>
-          <select id="week-select" disabled></select>
+      <div class="masthead-controls">
+        <label class="allergen-toggle" for="hide-allergens">
+          <input id="hide-allergens" type="checkbox" checked aria-controls="plan">
+          <span>Allergene ausblenden</span>
         </label>
-        <button id="next" type="button" hidden>Nächste ›</button>
-      </nav>
+        <nav class="week-nav" aria-label="Woche wählen">
+          <button id="prev" type="button" hidden>‹ Vorherige</button>
+          <label class="select-wrap">
+            <span class="sr">Woche wählen</span>
+            <select id="week-select" disabled></select>
+          </label>
+          <button id="next" type="button" hidden>Nächste ›</button>
+        </nav>
+      </div>
     </div>
   </header>
 
@@ -45,6 +51,7 @@
 
     <section class="legend" aria-labelledby="legend-title">
       <h2 id="legend-title">Allergene</h2>
+      <p class="legend-help">Allergen anklicken, um passende Gerichte rot hervorzuheben. Mehrere Allergene sind möglich.</p>
       <ul id="legend"></ul>
     </section>
   </main>

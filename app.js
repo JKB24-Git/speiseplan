@@ -13,8 +13,10 @@
     weekError: "Der Speiseplan für diese Woche kann nicht angezeigt werden.",
     unknownWeek: "Diese Woche wurde nicht gefunden. Angezeigt wird die aktuelle Woche.",
     outdated: "Für die laufende Woche wurde noch kein Speiseplan veröffentlicht. Angezeigt wird der letzte Plan.",
+    noNewPlan: "Für die laufende Woche ist noch kein neuer Speiseplan verfügbar.",
     notCurrent: "Dieser Plan ist nicht mehr aktuell.",
     toCurrent: "Zur aktuellen Woche",
+    toLatest: "Zur neuesten verfügbaren Woche",
     noEntries: "Keine Angaben",
     today: "Heute",
     calendarWeek: "Kalenderwoche",
@@ -40,6 +42,15 @@
     dinner: { start: "18:00", end: "18:30" }
   };
 
+  var FRIDAY_LUNCH_TIME = { start: "13:00", end: "13:30" };
+
+  function mealTimeFor(day, mealKey) {
+    if (mealKey === "lunch" && String(day && day.day || "").trim().toLowerCase() === "freitag") {
+      return FRIDAY_LUNCH_TIME;
+    }
+    return MEAL_TIMES[mealKey];
+  }
+
   function parseHM(hm) {
     var p = hm.split(":");
     return Number(p[0]) * 60 + Number(p[1]);
@@ -59,9 +70,10 @@
         var items = day[meal.key];
         if (!Array.isArray(items) || !items.length) return;
         var startAt = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-        startAt.setMinutes(parseHM(MEAL_TIMES[meal.key].start), 0, 0);
+        var times = mealTimeFor(day, meal.key);
+        startAt.setMinutes(parseHM(times.start), 0, 0);
         var endAt = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-        endAt.setMinutes(parseHM(MEAL_TIMES[meal.key].end), 0, 0);
+        endAt.setMinutes(parseHM(times.end), 0, 0);
         if (endAt <= startAt) endAt.setDate(endAt.getDate() + 1);
         if (endAt > now) candidates.push({ dayIndex: dayIndex, key: meal.key, startsAt: startAt });
       });
@@ -173,6 +185,8 @@
     allergens: [],    // Liste in der Reihenfolge von allergens.json
     allergenByCode: {},
     dishes: {},        // Name (getrimmt) -> { image, description } aus dishes.json
+    hideAllergens: true,
+    selectedAllergens: {},
     request: 0,        // schützt vor Durcheinander bei schnellem Klicken
     firstView: true    // nur beim ersten Aufbau nicht animieren / zum heutigen Tag scrollen
   };
@@ -186,7 +200,9 @@
     prev: $("prev"),
     next: $("next"),
     legend: $("legend"),
-    panel: document.querySelector(".panel")
+    panel: document.querySelector(".panel"),
+    mastheadText: document.querySelector(".masthead-text"),
+    hideAllergens: $("hide-allergens")
   };
 
   function setAllergens(data) {
@@ -234,14 +250,14 @@
   /* ------------------------------------------------------------
      Anzeige
      ------------------------------------------------------------ */
-  function showNotice(message, linkText) {
+  function showNotice(message, linkText, linkHref) {
     ui.notice.textContent = "";
     if (!message) { ui.notice.hidden = true; return; }
     ui.notice.appendChild(document.createTextNode(message));
     if (linkText) {
       ui.notice.appendChild(document.createTextNode(" "));
       var a = el("a", "", linkText);
-      a.href = "#";
+      a.href = linkHref || "#";
       ui.notice.appendChild(a);
     }
     ui.notice.hidden = false;
@@ -276,14 +292,17 @@
 
   // Ein Kästchen; foldable=true fügt den (per Klick/Hover aufklappbaren) Namen hinzu.
   // Ohne foldable bleibt es ein reines Anzeige-Kästchen (z. B. in der Legende, wo der Name schon danebensteht).
-  function makeChip(code, foldable) {
+  function makeChip(code, foldable, filterable) {
     var info = state.allergenByCode[code];
     var name = info ? info.name : TEXT.unknownAllergen;
-    var chip = el(foldable ? "button" : "span", "al" + (foldable ? " al-foldable" : "") + (info ? "" : " al-unknown"));
-    if (foldable) {
+    var isButton = foldable || filterable;
+    var chip = el(isButton ? "button" : "span", "al" + (foldable ? " al-foldable" : "") + (filterable ? " al-filter" : "") + (info ? "" : " al-unknown"));
+    if (isButton) {
       chip.type = "button";
-      chip.setAttribute("aria-expanded", "false");
-      chip.setAttribute("aria-label", code + ": " + name);
+      if (foldable) chip.setAttribute("aria-expanded", "false");
+      chip.setAttribute("aria-label", filterable
+        ? "Allergen " + code + ": " + name + ". Anklicken, um passende Gerichte rot zu markieren."
+        : code + ": " + name);
     }
     chip.setAttribute("data-code", code);
     if (info && info.color) {
@@ -297,6 +316,15 @@
     if (foldable) {
       chip.appendChild(el("span", "al-name", name));
       chip.appendChild(el("span", "sr", name));
+    }
+    if (filterable) {
+      chip.setAttribute("aria-pressed", state.selectedAllergens[code] ? "true" : "false");
+      chip.title = "Passende Gerichte hervorheben: " + name;
+      chip.addEventListener("click", function () {
+        if (state.selectedAllergens[code]) delete state.selectedAllergens[code];
+        else state.selectedAllergens[code] = true;
+        applyAllergenHighlights();
+      });
     }
     return chip;
   }
@@ -578,6 +606,7 @@
     } else {
       d.allergenWrap.hidden = true;
     }
+    applyAllergenHighlights();
 
     detailTrigger = triggerEl || null;
     document.body.classList.add("detail-open");
@@ -630,7 +659,7 @@
     var cell = el("div", "meal meal-" + meal.key + (isNext ? " is-next" : ""));
     var label = el("h3", "meal-label");
     label.appendChild(document.createTextNode(meal.label + " "));
-    label.appendChild(el("span", "meal-time", formatRange(MEAL_TIMES[meal.key])));
+    label.appendChild(el("span", "meal-time", formatRange(mealTimeFor(day, meal.key))));
     cell.appendChild(label);
 
     var list = el("ul", "dishes");
@@ -694,6 +723,7 @@
     days.forEach(function (day) {
       if (day && typeof day === "object") ui.plan.appendChild(renderDay(day, monday, today, nextMeal));
     });
+    applyAllergenHighlights();
   }
 
   // Kurzes Überblenden beim Wechsel der Woche. Wird beim allerersten Aufbau
@@ -701,9 +731,13 @@
   function renderWeekAnimated(file, data, animate) {
     if (!animate || !ui.panel || reduceMotion()) { renderWeek(file, data); return; }
     ui.panel.classList.add("is-changing");
+    if (ui.mastheadText) ui.mastheadText.classList.add("is-changing");
     setTimeout(function () {
       renderWeek(file, data);
-      requestAnimationFrame(function () { ui.panel.classList.remove("is-changing"); });
+      requestAnimationFrame(function () {
+        ui.panel.classList.remove("is-changing");
+        if (ui.mastheadText) ui.mastheadText.classList.remove("is-changing");
+      });
     }, 160);
   }
 
@@ -743,9 +777,43 @@
     ui.legend.textContent = "";
     state.allergens.forEach(function (a) {
       var li = el("li");
-      li.appendChild(makeChip(a.code, false));
+      li.appendChild(makeChip(a.code, false, true));
       li.appendChild(el("span", "", a.name));
       ui.legend.appendChild(li);
+    });
+    applyAllergenHighlights();
+  }
+
+  function applyAllergenHighlights() {
+    var selected = Object.keys(state.selectedAllergens);
+    document.body.classList.toggle("has-allergen-filter", selected.length > 0);
+
+    document.querySelectorAll(".al[data-code]").forEach(function (chip) {
+      var active = selected.indexOf(chip.getAttribute("data-code")) >= 0;
+      chip.classList.toggle("is-selected", active);
+      chip.classList.toggle("is-muted", selected.length > 0 && !active);
+      if (chip.classList.contains("al-filter")) chip.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+
+    document.querySelectorAll(".dishes li").forEach(function (item) {
+      var matches = Array.prototype.some.call(item.querySelectorAll(".allergens .al[data-code]"), function (chip) {
+        return selected.indexOf(chip.getAttribute("data-code")) >= 0;
+      });
+      item.classList.toggle("has-allergen-match", matches);
+    });
+  }
+
+  function initAllergenVisibility() {
+    var saved = null;
+    try { saved = window.localStorage.getItem("speiseplan-hide-allergens"); } catch (e) { /* privater Modus */ }
+    state.hideAllergens = saved === null ? true : saved === "true";
+    if (!ui.hideAllergens) return;
+    ui.hideAllergens.checked = state.hideAllergens;
+    document.body.classList.toggle("hide-allergens", state.hideAllergens);
+    ui.hideAllergens.addEventListener("change", function () {
+      state.hideAllergens = ui.hideAllergens.checked;
+      document.body.classList.toggle("hide-allergens", state.hideAllergens);
+      try { window.localStorage.setItem("speiseplan-hide-allergens", String(state.hideAllergens)); } catch (e) { /* Einstellung gilt bis zum Schließen der Seite */ }
     });
   }
 
@@ -775,10 +843,14 @@
 
       var monday = mondayOf(dateFromFile(file));
       var weekIsOver = new Date() > addDays(monday, 7);   // ab Montag der Folgewoche
+      var newestMonday = mondayOf(dateFromFile(newest));
+      var currentMonday = mondayOf(new Date());
+      var noCurrentWeekPlan = newestMonday < currentMonday;
       if (unknown) {
         showNotice(TEXT.unknownWeek);
       } else if (file !== newest) {
-        showNotice(TEXT.notCurrent, TEXT.toCurrent);
+        if (noCurrentWeekPlan) showNotice(TEXT.noNewPlan, TEXT.toLatest, "#" + stem(newest));
+        else showNotice(TEXT.notCurrent, TEXT.toCurrent, "#" + stem(newest));
       } else if (weekIsOver) {
         showNotice(TEXT.outdated);
       }
@@ -786,9 +858,9 @@
       // Beim ersten Öffnen den heutigen Tag ins Bild holen (falls er nicht schon sichtbar ist)
       if (state.firstView) {
         state.firstView = false;
-        var todayRow = ui.plan.querySelector(".is-today");
-        if (todayRow && file === newest) {
-          todayRow.scrollIntoView({ block: "center", behavior: reduceMotion() ? "auto" : "smooth" });
+        var nextMealRow = ui.plan.querySelector(".meal.is-next");
+        if (nextMealRow && file === newest) {
+          nextMealRow.scrollIntoView({ block: "center", behavior: reduceMotion() ? "auto" : "smooth" });
         }
       }
     }).catch(function (err) {
@@ -815,11 +887,12 @@
      Start
      ------------------------------------------------------------ */
   showMessage(TEXT.loading);
+  initAllergenVisibility();
 
   // Uhrzeiten neben "Mittagessen"/"Abendessen" oben in der Leiste (nur am PC sichtbar).
   (function initMealTimeLabels() {
     var lunchEl = $("gh-lunch"), dinnerEl = $("gh-dinner");
-    if (lunchEl) { lunchEl.appendChild(document.createTextNode(" ")); lunchEl.appendChild(el("span", "meal-time", formatRange(MEAL_TIMES.lunch))); }
+    if (lunchEl) { lunchEl.appendChild(document.createTextNode(" ")); lunchEl.appendChild(el("span", "meal-time", formatRange(MEAL_TIMES.lunch) + " · Fr " + formatRange(FRIDAY_LUNCH_TIME))); }
     if (dinnerEl) { dinnerEl.appendChild(document.createTextNode(" ")); dinnerEl.appendChild(el("span", "meal-time", formatRange(MEAL_TIMES.dinner))); }
   })();
 
