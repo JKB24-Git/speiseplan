@@ -319,10 +319,15 @@
     }
     if (filterable) {
       chip.setAttribute("aria-pressed", state.selectedAllergens[code] ? "true" : "false");
-      chip.title = "Passende Gerichte hervorheben: " + name;
+      chip.title = "Passende Gerichte hervorheben: " + name + ". Doppelklick setzt alle Filter zurück.";
       chip.addEventListener("click", function () {
         if (state.selectedAllergens[code]) delete state.selectedAllergens[code];
         else state.selectedAllergens[code] = true;
+        applyAllergenHighlights();
+      });
+      chip.addEventListener("dblclick", function (event) {
+        event.preventDefault();
+        state.selectedAllergens = {};
         applyAllergenHighlights();
       });
     }

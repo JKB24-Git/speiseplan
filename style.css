@@ -150,9 +150,11 @@ body {
 
 .masthead-controls {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.6rem;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
 }
 
 .allergen-toggle {
@@ -163,6 +165,11 @@ body {
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
+  min-height: 2.5rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.07);
 }
 .allergen-toggle input {
   width: 1.05rem;
@@ -202,8 +209,8 @@ body {
 }
 
 @media (max-width: 859px) {
-  .masthead-controls { width: 100%; align-items: stretch; }
-  .allergen-toggle { align-self: flex-end; }
+  .masthead-controls { width: 100%; flex-direction: column; align-items: stretch; }
+  .allergen-toggle { align-self: flex-start; }
 }
 
 .week-nav button,
@@ -328,13 +335,14 @@ body {
 /* Zeitlich nächste veröffentlichte Mahlzeit */
 .meal.is-next {
   position: relative;
-  padding: 0.9rem 1rem 1rem 1.15rem;
-  border-radius: 0.65rem;
+  padding: 1rem 1.1rem 1.1rem;
+  border: 2px solid var(--next-accent);
+  border-radius: 0.75rem;
   background: var(--next-bg);
-  box-shadow: inset 4px 0 0 var(--next-accent), 0 2px 10px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
   scroll-margin-top: 7rem;
 }
-.meal.is-next .meal-label { border-color: var(--next-accent); }
+.meal.is-next .meal-label { border-color: var(--next-accent); border-bottom-width: 3px; }
 
 .meal-label {
   margin: 0 0 0.5rem;
@@ -522,7 +530,6 @@ body.hide-allergens .allergens { display: none; }
 
 /* ---------- Legende ---------- */
 .legend { margin: 2rem 0 0; padding-bottom: 3rem; }
-.legend-help { margin: -0.25rem 0 0.85rem; color: var(--muted); font-size: 0.9rem; }
 
 .legend h2 {
   margin: 0 0 0.75rem;
