@@ -185,6 +185,9 @@
     allergens: [],    // Liste in der Reihenfolge von allergens.json
     allergenByCode: {},
     dishes: {},        // Name (getrimmt) -> { image, description } aus dishes.json
+    weekData: {},
+    historyFiles: [],
+    pendingNavigation: null,
     hideAllergens: true,
     selectedAllergens: {},
     request: 0,        // schützt vor Durcheinander bei schnellem Klicken
@@ -490,6 +493,103 @@
 
   function isLightboxOpen() { return !!(lightbox && !lightbox.overlay.hidden); }
 
+  function schoolYearStart(today) {
+    var year = today.getFullYear() - (today.getMonth() < 8 ? 1 : 0);
+    return new Date(year, 8, 1);
+  }
+
+  function dateKey(date) {
+    return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate());
+  }
+
+  function normalizedDishName(name) { return String(name || "").trim().replace(/\s+/g, " ").toLocaleLowerCase("de"); }
+
+  function dishOccurrences(name) {
+    var target = normalizedDishName(name);
+    var occurrences = [];
+    var now = new Date();
+    var schoolStart = schoolYearStart(now);
+    var schoolEnd = new Date(schoolStart.getFullYear() + 1, 7, 31);
+    state.historyFiles.forEach(function (file) {
+      var data = state.weekData[file];
+      if (!data || !Array.isArray(data.days)) return;
+      var monday = mondayOf(dateFromFile(file));
+      data.days.forEach(function (day) {
+        if (!day || typeof day !== "object") return;
+        var dayIndex = DAY_NAMES.indexOf(String(day.day || "").trim().toLowerCase());
+        if (dayIndex < 0) return;
+        var date = addDays(monday, dayIndex);
+        if (date < schoolStart || date > schoolEnd) return;
+        var meals = {};
+        MEALS.forEach(function (meal) { meals[meal.key] = Array.isArray(day[meal.key]) ? day[meal.key] : []; });
+        MEALS.forEach(function (meal) {
+          var items = meals[meal.key];
+          var mainIndex = items.length >= 2 ? items.length - 2 : (items.length === 1 ? 0 : -1);
+          if (mainIndex < 0 || !items[mainIndex] || normalizedDishName(items[mainIndex].name) !== target) return;
+          var time = mealTimeFor(day, meal.key);
+          var endedAt = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+          endedAt.setMinutes(parseHM(time.end), 0, 0);
+          occurrences.push({
+            file: file,
+            date: date,
+            dateKey: dateKey(date),
+            dayName: String(day.day).trim(),
+            mealKey: meal.key,
+            mealLabel: meal.label,
+            endedAt: endedAt,
+            happened: endedAt <= now
+          });
+        });
+      });
+    });
+    occurrences.sort(function (a, b) {
+      if (a.date - b.date) return a.date - b.date;
+      if (a.mealKey === b.mealKey) return 0;
+      return a.mealKey === "lunch" ? -1 : 1;
+    });
+    return occurrences;
+  }
+
+  function navigateToOccurrence(occurrences, occurrence) {
+    var later = occurrences.filter(function (item) { return item.endedAt > occurrence.endedAt; })[0];
+    var destination = later || occurrence;
+    var message = later
+      ? "Danach war dieses Gericht noch einmal am " + formatDate(later.date) + " (" + later.mealLabel + ") eingeplant. Du wirst dorthin weitergeleitet."
+      : "Du wirst zum Speiseplan vom " + formatDate(occurrence.date) + " weitergeleitet.";
+    state.pendingNavigation = {
+      week: stem(destination.file),
+      date: destination.dateKey,
+      mealKey: destination.mealKey,
+      message: message
+    };
+    closeDetail();
+    if (location.hash.replace(/^#/, "") === state.pendingNavigation.week) route();
+    else location.hash = state.pendingNavigation.week;
+  }
+
+  function renderDishHistory(name, dialog) {
+    var occurrences = dishOccurrences(name);
+    var past = occurrences.filter(function (item) { return item.happened; });
+    dialog.historySummary.textContent = past.length
+      ? past.length + "-mal im verfügbaren Schuljahresplan; zuletzt am " + formatDate(past[past.length - 1].date) + " (" + past[past.length - 1].mealLabel + ")."
+      : "Bisher im verfügbaren Schuljahresplan noch nicht als vergangene Mahlzeit eingetragen.";
+    dialog.historyList.textContent = "";
+    if (!occurrences.length) {
+      dialog.historyList.appendChild(el("li", "detail-history-empty", "Für dieses Schuljahr sind keine Vorkommen in den verfügbaren Wochenplänen gefunden worden."));
+      return;
+    }
+    occurrences.slice().reverse().forEach(function (occurrence) {
+      var li = el("li");
+      var button = el("button", "detail-history-entry");
+      button.type = "button";
+      button.appendChild(document.createTextNode(occurrence.dayName + ", " + formatDate(occurrence.date) + " · " + occurrence.mealLabel));
+      button.appendChild(el("small", "", occurrence.happened ? " · im Plan gewesen" : " · geplant"));
+      button.addEventListener("click", function () { navigateToOccurrence(occurrences, occurrence); });
+      li.appendChild(button);
+      dialog.historyList.appendChild(li);
+    });
+  }
+
   /* ---------- Foto/Beschreibung: Dialog beim Anklicken ---------- */
   var detail = null;
   var detailTrigger = null;
@@ -541,6 +641,15 @@
     link.rel = "noopener noreferrer";
     link.hidden = true;
     var allergenWrap = el("div", "detail-allergens");
+    var history = el("section", "detail-history");
+    history.setAttribute("aria-labelledby", "detail-history-title");
+    var historyTitle = el("h4", "", "Dieses Schuljahr im Speiseplan");
+    historyTitle.id = "detail-history-title";
+    var historySummary = el("p", "detail-history-summary");
+    var historyList = el("ul", "detail-history-list");
+    history.appendChild(historyTitle);
+    history.appendChild(historySummary);
+    history.appendChild(historyList);
 
     body.appendChild(allergenWrap);
     body.appendChild(media);
@@ -551,12 +660,13 @@
     dialog.appendChild(closeBtn);
     dialog.appendChild(title);
     dialog.appendChild(content);
+    dialog.appendChild(history);
     overlay.appendChild(dialog);
     document.body.appendChild(overlay);
 
     overlay.addEventListener("click", function (e) { if (e.target === overlay) closeDetail(); });
 
-    detail = { overlay: overlay, dialog: dialog, closeBtn: closeBtn, title: title, media: media, img: img, desc: desc, link: link, allergenWrap: allergenWrap, closeTimer: null };
+    detail = { overlay: overlay, dialog: dialog, closeBtn: closeBtn, title: title, media: media, img: img, desc: desc, link: link, allergenWrap: allergenWrap, history: history, historySummary: historySummary, historyList: historyList, closeTimer: null };
     return detail;
   }
 
@@ -564,10 +674,11 @@
     if (isLightboxOpen()) return;   // die Lightbox hat ihren eigenen Escape/Tab-Handler
     if (e.key === "Escape" && !canHover()) { closeDetail(); return; }
     if (e.key === "Tab") {
-      // Nur sichtbare Ziele in den Fokusumlauf aufnehmen (das Bild kann fehlen).
-      var focusables = [detail.closeBtn];
-      if (!detail.media.hidden && !detail.img.hidden) focusables.push(detail.img);
-      if (!detail.link.hidden) focusables.push(detail.link);
+      // Alle sichtbaren Ziele im Dialog (einschließlich der Historienlinks) aufnehmen.
+      var focusables = Array.prototype.filter.call(detail.dialog.querySelectorAll("button, a[href], [tabindex='0']"), function (node) {
+        return !node.disabled && !node.hidden && node.getAttribute("aria-hidden") !== "true" && node.getClientRects().length > 0;
+      });
+      if (!focusables.length) focusables = [detail.closeBtn];
       var index = focusables.indexOf(document.activeElement);
       var next = e.shiftKey
         ? (index <= 0 ? focusables.length - 1 : index - 1)
@@ -584,6 +695,7 @@
 
     d.title.textContent = name;
 
+    info = info || {};
     if (info.image) {
       d.img.onerror = function () { d.media.hidden = true; };
       d.img.src = info.image;
@@ -603,6 +715,8 @@
       d.link.title = info.link;
       d.link.setAttribute("aria-label", TEXT.linkHint + ": " + host);
     }
+
+    renderDishHistory(name, d);
 
     d.allergenWrap.textContent = "";
     if (allergens && allergens.length) {
@@ -637,15 +751,17 @@
   /* ---------- Ein Gericht (mit oder ohne Foto/Beschreibung) ---------- */
   function renderDish(item, isMain) {
     var name = item.name;
-    var info = isMain ? state.dishes[name.trim()] : null;
+    var info = isMain ? (state.dishes[name.trim()] || {}) : null;
     var cls = "dish" + (isMain ? " dish-main" : "");
 
-    if (!info) return el("div", cls, name);
+    if (!isMain) return el("div", cls, name);
 
     var trigger = el("button", cls + " dish-detail", name);
     trigger.type = "button";
     trigger.setAttribute("aria-haspopup", "dialog");
-    trigger.title = TEXT.detailHint;
+    trigger.title = info.description || info.image || info.link
+      ? TEXT.detailHint + " und Schuljahres-Historie ansehen"
+      : "Schuljahres-Historie ansehen";
 
     var allergens = Array.isArray(item.allergens) ? item.allergens : [];
     trigger.addEventListener("click", function () { openDetail(name, info, allergens, trigger); });
@@ -659,7 +775,7 @@
     if (!items.length) return null;   // leere Mahlzeit (z. B. Freitagabend): gar nichts anzeigen
 
     // Das Hauptgericht ist immer das vorletzte Gericht der Mahlzeit (danach kommt nur noch der Nachtisch/Obst).
-    var mainIndex = items.length >= 2 ? items.length - 2 : -1;
+    var mainIndex = items.length >= 2 ? items.length - 2 : (items.length === 1 ? 0 : -1);
 
     var cell = el("div", "meal meal-" + meal.key + (isNext ? " is-next" : ""));
     var label = el("h3", "meal-label");
@@ -689,6 +805,7 @@
     var isToday = !!date && sameDay(date, today);
 
     var section = el("section", "day" + (isToday ? " is-today" : ""));
+    if (date) section.dataset.dayDate = dateKey(date);
     if (isToday) section.setAttribute("aria-current", "date");
 
     var head = el("div", "day-head");
@@ -733,8 +850,12 @@
 
   // Kurzes Überblenden beim Wechsel der Woche. Wird beim allerersten Aufbau
   // und bei "Bewegung reduzieren" übersprungen.
-  function renderWeekAnimated(file, data, animate) {
-    if (!animate || !ui.panel || reduceMotion()) { renderWeek(file, data); return; }
+  function renderWeekAnimated(file, data, animate, onDone) {
+    if (!animate || !ui.panel || reduceMotion()) {
+      renderWeek(file, data);
+      if (onDone) onDone();
+      return;
+    }
     ui.panel.classList.add("is-changing");
     if (ui.mastheadText) ui.mastheadText.classList.add("is-changing");
     setTimeout(function () {
@@ -742,6 +863,7 @@
       requestAnimationFrame(function () {
         ui.panel.classList.remove("is-changing");
         if (ui.mastheadText) ui.mastheadText.classList.remove("is-changing");
+        if (onDone) onDone();
       });
     }, 160);
   }
@@ -776,6 +898,20 @@
     ui.next.classList.toggle("is-off", !hasNewer);
     ui.prev.dataset.target = hasOlder ? stem(state.files[i + 1]) : "";
     ui.next.dataset.target = hasNewer ? stem(state.files[i - 1]) : "";
+  }
+
+  function loadSchoolYearHistory() {
+    var start = schoolYearStart(new Date());
+    var end = new Date(start.getFullYear() + 1, 7, 31);
+    state.historyFiles = state.files.filter(function (file) {
+      var monday = mondayOf(dateFromFile(file));
+      return addDays(monday, 4) >= start && monday <= end;
+    });
+    return Promise.all(state.historyFiles.map(function (file) {
+      return fetchJSON("weeks/" + file).then(function (data) {
+        state.weekData[file] = data;
+      }).catch(function () { state.weekData[file] = null; });
+    }));
   }
 
   function renderLegend() {
@@ -842,32 +978,42 @@
     renderControls(file);
     showNotice("");
 
-    fetchJSON("weeks/" + file).then(function (data) {
+    var weekPromise = state.weekData[file]
+      ? Promise.resolve(state.weekData[file])
+      : fetchJSON("weeks/" + file);
+    weekPromise.then(function (data) {
       if (id !== state.request) return;
-      renderWeekAnimated(file, data, animate);
-
-      var monday = mondayOf(dateFromFile(file));
-      var weekIsOver = new Date() > addDays(monday, 7);   // ab Montag der Folgewoche
-      var newestMonday = mondayOf(dateFromFile(newest));
-      var currentMonday = mondayOf(new Date());
-      var noCurrentWeekPlan = newestMonday < currentMonday;
-      if (unknown) {
-        showNotice(TEXT.unknownWeek);
-      } else if (file !== newest) {
-        if (noCurrentWeekPlan) showNotice(TEXT.noNewPlan, TEXT.toLatest, "#" + stem(newest));
-        else showNotice(TEXT.notCurrent, TEXT.toCurrent, "#" + stem(newest));
-      } else if (weekIsOver) {
-        showNotice(TEXT.outdated);
-      }
-
-      // Beim ersten Öffnen den heutigen Tag ins Bild holen (falls er nicht schon sichtbar ist)
-      if (state.firstView) {
-        state.firstView = false;
-        var nextMealRow = ui.plan.querySelector(".meal.is-next");
-        if (nextMealRow && file === newest) {
-          nextMealRow.scrollIntoView({ block: "center", behavior: reduceMotion() ? "auto" : "smooth" });
+      renderWeekAnimated(file, data, animate, function () {
+        if (id !== state.request) return;
+        var monday = mondayOf(dateFromFile(file));
+        var weekIsOver = new Date() > addDays(monday, 7);   // ab Montag der Folgewoche
+        var newestMonday = mondayOf(dateFromFile(newest));
+        var currentMonday = mondayOf(new Date());
+        var noCurrentWeekPlan = newestMonday < currentMonday;
+        if (unknown) {
+          showNotice(TEXT.unknownWeek);
+        } else if (file !== newest) {
+          if (noCurrentWeekPlan) showNotice(TEXT.noNewPlan, TEXT.toLatest, "#" + stem(newest));
+          else showNotice(TEXT.notCurrent, TEXT.toCurrent, "#" + stem(newest));
+        } else if (weekIsOver) {
+          showNotice(TEXT.outdated);
         }
-      }
+
+        var wasFirstView = state.firstView;
+        state.firstView = false;
+        var pending = state.pendingNavigation;
+        if (pending && pending.week === stem(file)) {
+          state.pendingNavigation = null;
+          showNotice(pending.message);
+          var target = ui.plan.querySelector('.day[data-day-date="' + pending.date + '"] .meal-' + pending.mealKey);
+          if (target) target.scrollIntoView({ block: "center", behavior: reduceMotion() ? "auto" : "smooth" });
+        } else if (wasFirstView) {
+          var nextMealRow = ui.plan.querySelector(".meal.is-next");
+          if (nextMealRow && file === newest) {
+            nextMealRow.scrollIntoView({ block: "center", behavior: reduceMotion() ? "auto" : "smooth" });
+          }
+        }
+      });
     }).catch(function (err) {
       if (id !== state.request) return;
       if (window.console) console.error(err);
@@ -929,7 +1075,7 @@
       showMessage(TEXT.noWeeks);
       return;
     }
-    return Promise.all([legendReady, dishesReady]).then(route);
+    return Promise.all([legendReady, dishesReady]).then(loadSchoolYearHistory).then(route);
   }).catch(function (err) {
     if (window.console) console.error(err);
     ui.label.textContent = "";

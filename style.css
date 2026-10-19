@@ -167,9 +167,6 @@ body {
   cursor: pointer;
   min-height: 2.5rem;
   padding: 0.45rem 0.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.07);
 }
 .allergen-toggle input {
   width: 1.05rem;
@@ -714,7 +711,7 @@ body.detail-open { overflow: hidden; }
   color: var(--ink);
   border-radius: 10px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
-  padding: 1.5rem 1.5rem 1.75rem;
+  padding: 1.5rem 1.5rem 3rem;
   transform: translateY(12px) scale(0.98);
   opacity: 0;
   transition: opacity 0.22s ease, transform 0.22s ease;
@@ -774,8 +771,30 @@ body.detail-open { overflow: hidden; }
 .detail-allergens:not([hidden]) { margin-bottom: 0.75rem; }
 .detail-allergens .allergens { margin-top: 0.25rem; }
 
+.detail-history {
+  margin: 1rem 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule);
+}
+.detail-history h4 { margin: 0 0 0.35rem; font-size: 1.05rem; }
+.detail-history-summary { margin: 0 0 0.65rem; color: var(--muted); }
+.detail-history-list { list-style: none; display: grid; gap: 0.4rem; max-height: 13rem; overflow-y: auto; margin: 0; padding: 0; }
+.detail-history-list button {
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.detail-history-list button:hover { border-color: var(--next-accent); background: var(--next-bg); }
+.detail-history-list small { color: var(--muted); }
+
 @media (max-width: 859px) {
-  .detail-dialog { max-height: calc(100vh - 1.25rem); padding: 1.1rem 1.1rem 1.3rem; }
+  .detail-dialog { max-height: calc(100vh - 1.25rem); padding: 1.1rem 1.1rem 2.5rem; }
   .detail-link { left: 1.1rem; bottom: 0.45rem; max-width: calc(100% - 2.2rem); }
   .detail-title { font-size: 1.25rem; margin-right: 2.1rem; }
   .detail-media { float: none; width: 100%; max-width: none; margin: 0 0 1rem; }
