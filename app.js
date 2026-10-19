@@ -259,9 +259,22 @@
   /* ------------------------------------------------------------
      Anzeige
      ------------------------------------------------------------ */
+  function syncNoticeStickyHeight() {
+    if (ui.notice.hidden) {
+      document.documentElement.style.setProperty("--notice-sticky-height", "0px");
+      return;
+    }
+    var marginTop = parseFloat(window.getComputedStyle(ui.notice).marginTop) || 0;
+    document.documentElement.style.setProperty("--notice-sticky-height", (ui.notice.offsetHeight + marginTop) + "px");
+  }
+
   function showNotice(message, linkText, linkHref, actionText, action) {
     ui.notice.textContent = "";
-    if (!message) { ui.notice.hidden = true; return; }
+    if (!message) {
+      ui.notice.hidden = true;
+      syncNoticeStickyHeight();
+      return;
+    }
     ui.notice.appendChild(document.createTextNode(message));
     if (linkText) {
       ui.notice.appendChild(document.createTextNode(" "));
@@ -276,6 +289,7 @@
       ui.notice.appendChild(button);
     }
     ui.notice.hidden = false;
+    syncNoticeStickyHeight();
   }
 
   function showMessage(message) {
@@ -334,12 +348,10 @@
     }
     if (filterable) {
       chip.setAttribute("aria-pressed", state.selectedAllergens[code] ? "true" : "false");
-      chip.title = "Passende Gerichte hervorheben: " + name + ". Doppelklick setzt alle Filter zurück.";
+      chip.title = "Passende Gerichte hervorheben: " + name;
       chip.addEventListener("click", function () {
         if (suppressAllergenClick) { suppressAllergenClick = false; return; }
-        if (state.selectedAllergens[code]) delete state.selectedAllergens[code];
-        else state.selectedAllergens[code] = true;
-        applyAllergenHighlights();
+        toggleAllergen(code);
       });
     }
     return chip;
@@ -347,10 +359,15 @@
 
   var allergenDrag = null;
   var suppressAllergenClick = false;
-  function setDraggedAllergen(code, selected) {
-    if (selected) state.selectedAllergens[code] = true;
+  var allergenSuppressTimer = null;
+  function toggleAllergen(code, selected) {
+    var shouldSelect = typeof selected === "boolean" ? selected : !state.selectedAllergens[code];
+    if (shouldSelect) state.selectedAllergens[code] = true;
     else delete state.selectedAllergens[code];
     applyAllergenHighlights();
+  }
+  function setDraggedAllergen(code, selected) {
+    toggleAllergen(code, selected);
   }
   document.addEventListener("pointerdown", function (event) {
     var chip = event.target.closest && event.target.closest(".al-filter");
@@ -374,7 +391,8 @@
     if (allergenDrag.moved) {
       setDraggedAllergen(allergenDrag.start, allergenDrag.selected);
       suppressAllergenClick = true;
-      window.setTimeout(function () { suppressAllergenClick = false; }, 0);
+      window.clearTimeout(allergenSuppressTimer);
+      allergenSuppressTimer = window.setTimeout(function () { suppressAllergenClick = false; }, 150);
     }
     allergenDrag = null;
   });
@@ -437,14 +455,6 @@
 
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") closeOpenChip();
-  });
-
-  document.addEventListener("dblclick", function (e) {
-    var chip = e.target.closest ? e.target.closest(".al[data-code]") : null;
-    if (!chip) return;
-    e.preventDefault();
-    state.selectedAllergens = {};
-    applyAllergenHighlights();
   });
 
   /* ---------- Foto/Beschreibung: Vorschau beim Überfahren mit der Maus ---------- */
@@ -644,26 +654,57 @@
 
   function renderDishHistory(name, dialog) {
     var occurrences = dishOccurrences(name);
+    var context = state.detailContext;
+    if (context && context.name === name && !occurrences.some(function (item) {
+      return item.dateKey === context.date && item.mealKey === context.mealKey;
+    })) {
+      var date = new Date(context.date + "T12:00:00");
+      var contextDate = dateFromFile(context.date);
+      var file = context.week + ".json";
+      var week = state.weekData[file];
+      var dayIndex = Math.round((contextDate - mondayOf(contextDate)) / 86400000);
+      var day = week && Array.isArray(week.days) ? week.days.find(function (entry) {
+        return String(entry.day || "").trim().toLowerCase() === DAY_NAMES[dayIndex];
+      }) : null;
+      var meal = MEALS.find(function (entry) { return entry.key === context.mealKey; });
+      if (day && meal) {
+        var endedAt = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        endedAt.setMinutes(parseHM(mealTimeFor(day, meal.key).end), 0, 0);
+        occurrences.push({ file: file, date: date, dateKey: context.date, dayName: String(day.day).trim(), mealKey: meal.key, mealLabel: meal.label, endedAt: endedAt, happened: endedAt <= new Date() });
+      }
+    }
     var past = occurrences.filter(function (item) { return item.happened; });
     dialog.historySummary.textContent = past.length
-      ? past.length + "× · zuletzt am " + formatShort(past[past.length - 1].date)
-      : "Bisher noch nicht eingeplant";
+      ? occurrences.length + "× · zuletzt am " + formatShort(past[past.length - 1].date)
+      : occurrences.length
+        ? occurrences.length + "× · als Nächstes am " + formatShort(occurrences[0].date)
+        : "Dieser Termin steht im aktuellen Menü.";
     dialog.historyList.textContent = "";
-    if (!past.length) {
-      dialog.historyList.appendChild(el("li", "detail-history-empty", "Für dieses Schuljahr sind keine Vorkommen in den verfügbaren Wochenplänen gefunden worden."));
-      return;
-    }
-    past.slice().reverse().forEach(function (occurrence) {
-      var li = el("li");
-      var button = el("button", "detail-history-entry");
-      button.type = "button";
-      button.title = occurrence.dayName + ", " + formatDate(occurrence.date) + " · " + (occurrence.mealKey === "lunch" ? "Mittag" : "Abend");
-      button.setAttribute("aria-label", button.title + ". Zum Termin springen.");
-      button.appendChild(el("span", "history-day", occurrence.dayName.slice(0, 2)));
-      button.appendChild(el("span", "history-date", formatShort(occurrence.date)));
-      button.appendChild(el("span", "history-meal", occurrence.mealKey === "lunch" ? "Mittag" : "Abend"));
-      button.addEventListener("click", function () { navigateToOccurrence(past, occurrence); });
-      li.appendChild(button);
+    if (!occurrences.length) return;
+    var byDate = {};
+    occurrences.slice().reverse().forEach(function (occurrence) {
+      if (!byDate[occurrence.dateKey]) byDate[occurrence.dateKey] = { date: occurrence.date, dayName: occurrence.dayName, meals: [] };
+      byDate[occurrence.dateKey].meals.push(occurrence);
+    });
+    Object.keys(byDate).forEach(function (dateKey) {
+      var group = byDate[dateKey];
+      group.meals.sort(function (a, b) {
+        return (a.mealKey === "lunch" ? 0 : 1) - (b.mealKey === "lunch" ? 0 : 1);
+      });
+      var li = el("li", "history-date-entry");
+      li.appendChild(el("span", "history-day", group.dayName.slice(0, 2)));
+      li.appendChild(el("span", "history-date", formatShort(group.date)));
+      var mealLinks = el("div", "history-meals");
+      group.meals.forEach(function (occurrence) {
+        var button = el("button", "history-meal");
+        button.type = "button";
+        button.textContent = occurrence.mealKey === "lunch" ? "Mittag" : "Abend";
+        button.title = occurrence.dayName + ", " + formatDate(occurrence.date) + " · " + button.textContent;
+        button.setAttribute("aria-label", button.title + ". Zum Termin springen.");
+        button.addEventListener("click", function () { navigateToOccurrence(occurrences, occurrence); });
+        mealLinks.appendChild(button);
+      });
+      li.appendChild(mealLinks);
       dialog.historyList.appendChild(li);
     });
   }
@@ -685,7 +726,7 @@
     dialog.tabIndex = -1;
     dialog.addEventListener("click", function (e) {
       var target = e.target.nodeType === 1 ? e.target : e.target.parentElement;
-      if (canHover() || !target || !target.closest(".detail-title, .detail-description")) return;
+      if (canHover() || !target || target.closest("button, a, input, select, textarea, [role='button'], .detail-media, img")) return;
       var selection = window.getSelection ? window.getSelection() : null;
       if (selection && !selection.isCollapsed && selection.toString().trim()) return;
       closeDetail();
@@ -1006,8 +1047,19 @@
     ui.legend.textContent = "";
     state.allergens.forEach(function (a) {
       var li = el("li");
-      li.appendChild(makeChip(a.code, false, true));
-      li.appendChild(el("span", "", a.name));
+      var toggle = el("button", "legend-filter al-filter");
+      toggle.type = "button";
+      toggle.setAttribute("data-code", a.code);
+      toggle.setAttribute("aria-pressed", state.selectedAllergens[a.code] ? "true" : "false");
+      toggle.setAttribute("aria-label", "Allergen " + a.code + ": " + a.name + " umschalten");
+      toggle.title = "Passende Gerichte hervorheben: " + a.name;
+      toggle.appendChild(makeChip(a.code, false, false));
+      toggle.appendChild(el("span", "legend-allergen-name", a.name));
+      toggle.addEventListener("click", function () {
+        if (suppressAllergenClick) { suppressAllergenClick = false; return; }
+        toggleAllergen(a.code);
+      });
+      li.appendChild(toggle);
       ui.legend.appendChild(li);
     });
     applyAllergenHighlights();
@@ -1022,7 +1074,9 @@
       var active = selected.indexOf(chip.getAttribute("data-code")) >= 0;
       chip.classList.toggle("is-selected", active);
       chip.classList.toggle("is-muted", selected.length > 0 && !active);
-      if (chip.classList.contains("al-filter")) chip.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+    document.querySelectorAll(".al-filter[data-code]").forEach(function (filter) {
+      filter.setAttribute("aria-pressed", selected.indexOf(filter.getAttribute("data-code")) >= 0 ? "true" : "false");
     });
 
     document.querySelectorAll(".dishes li").forEach(function (item) {
@@ -1047,17 +1101,19 @@
       pill.setAttribute("aria-label", allergen.name + " abwählen");
       pill.appendChild(makeChip(allergen.code, false, false));
       pill.appendChild(el("span", "active-allergen-name", allergen.name));
-      pill.addEventListener("click", function () {
-        delete state.selectedAllergens[allergen.code];
-        applyAllergenHighlights();
-      });
+      pill.addEventListener("click", function () { toggleAllergen(allergen.code, false); });
       ui.activeAllergens.appendChild(pill);
     });
+    if (count) {
+      var clear = el("button", "active-allergen-clear", "Alle aus");
+      clear.type = "button";
+      clear.setAttribute("aria-label", "Alle Allergene abwählen");
+      clear.addEventListener("click", function () { state.selectedAllergens = {}; applyAllergenHighlights(); });
+      ui.activeAllergens.appendChild(clear);
+    }
     ui.activeAllergens.hidden = count === 0;
     ui.activeAllergens.classList.remove("is-compact");
-    if (count) requestAnimationFrame(function () {
-      ui.activeAllergens.classList.toggle("is-compact", ui.activeAllergens.scrollWidth > ui.activeAllergens.clientWidth + 1);
-    });
+    if (count) ui.activeAllergens.classList.toggle("is-compact", ui.activeAllergens.scrollWidth > ui.activeAllergens.clientWidth + 1);
   }
 
   function initAllergenVisibility() {
@@ -1077,6 +1133,9 @@
       state.hideAllergens = !ui.hideAllergens.checked;
       document.body.classList.toggle("hide-allergens", state.hideAllergens);
       try { window.localStorage.setItem("speiseplan-hide-allergens", String(state.hideAllergens)); } catch (e) { /* Einstellung gilt bis zum Schließen der Seite */ }
+    });
+    window.addEventListener("resize", function () {
+      syncNoticeStickyHeight();
     });
   }
 

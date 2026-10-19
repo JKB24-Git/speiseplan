@@ -217,7 +217,7 @@ body {
 
 @media (max-width: 859px) {
   .masthead-controls { width: 100%; flex-direction: column; align-items: stretch; }
-  .allergen-toggle { align-self: flex-start; font-size: 1.25rem; min-height: 3.75rem; padding: 0.75rem 1rem; }
+  .allergen-toggle { align-self: flex-end; justify-content: flex-end; font-size: 1.25rem; min-height: 3.75rem; padding: 0.75rem 1rem; }
   .allergen-toggle input { width: 1.8rem; height: 1.8rem; }
 }
 
@@ -266,9 +266,11 @@ body {
   color: var(--notice-ink);
   font-weight: 500;
 }
-.notice a { color: inherit; font-weight: 700; text-decoration: underline; }
+.notice a,
 .notice-action {
-  margin-left: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  margin: 0.2rem 0.35rem 0.2rem 0.55rem;
   padding: 0.35rem 0.65rem;
   border: 1px solid currentColor;
   border-radius: 4px;
@@ -276,9 +278,10 @@ body {
   color: inherit;
   font: inherit;
   font-weight: 700;
-  cursor: pointer;
+  text-decoration: none;
 }
-.notice-action:hover { background: rgba(255, 255, 255, 0.75); }
+.notice-action { cursor: pointer; }
+.notice a:hover, .notice-action:hover { background: rgba(255, 255, 255, 0.75); }
 
 /* ---------- Plan ---------- */
 .panel {
@@ -317,7 +320,7 @@ body {
   margin-bottom: 0.75rem;
 }
 
-.day-title { display: flex; flex-direction: column; }
+.day-title { display: flex; flex-flow: row wrap; align-items: baseline; gap: 0 0.55rem; }
 
 .day-name {
   margin: 0;
@@ -379,8 +382,8 @@ body {
 }
 
 .meal-time {
-  display: block;
-  margin-top: 0.1rem;
+  display: inline;
+  margin-left: 0.25em;
   color: var(--muted);
   font-weight: 400;
   font-size: 0.85em;
@@ -533,7 +536,7 @@ button.dish-detail:hover { color: var(--muted); }
   box-shadow: inset 0 0 0 2px var(--next-accent) !important;
 }
 .al-filter { cursor: pointer; }
-.al-filter[aria-pressed="true"] { transform: scale(1.06); }
+.legend-filter[aria-pressed="true"] .al { box-shadow: inset 0 0 0 2px var(--next-accent); }
 .dishes li.has-allergen-match > .dish { color: var(--allergen-match); }
 
 /* Hide meal/detail chips when requested; the clickable legend remains available. */
@@ -570,6 +573,20 @@ body.hide-allergens .allergens { display: none; }
   gap: 0.6rem;
   font-size: 0.95rem;
 }
+.legend-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+.legend-filter:hover .legend-allergen-name { text-decoration: underline; text-underline-offset: 0.15em; }
 
 /* Die Legende zeigt den Namen schon als eigenen Text; kein Aufklapp-Verhalten nötig */
 .legend .al { max-width: 1.6rem; }
@@ -605,6 +622,8 @@ body.hide-allergens .allergens { display: none; }
     overflow-wrap: anywhere;
     hyphens: auto;
   }
+  .legend-filter { justify-content: flex-start; gap: 0.4rem; min-width: 0; }
+  .legend-allergen-name { min-width: 0; text-align: left; }
   #legend {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -640,7 +659,7 @@ body.hide-allergens .allergens { display: none; }
   .grid-head {
     display: grid;
     position: sticky;
-    top: 0;
+    top: var(--notice-sticky-height, 0px);
     z-index: 5;
     background: var(--surface);
     padding: 1.15rem var(--pad-x) 0.75rem;
@@ -800,33 +819,36 @@ body.detail-open { overflow: hidden; }
 }
 .detail-history h4 { margin: 0 0 0.35rem; font-size: 1.05rem; }
 .detail-history-summary { margin: 0 0 0.65rem; color: var(--muted); }
-.detail-history-list { list-style: none; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.4rem; max-height: 13rem; overflow-y: auto; margin: 0; padding: 0; }
-.detail-history-list button {
-  display: grid;
-  grid-template-columns: auto auto;
-  grid-template-areas: "day date" "meal meal";
+.detail-history-list { list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; max-height: 13rem; overflow-y: auto; margin: 0; padding: 0; }
+.history-date-entry {
+  display: inline-flex;
   align-items: center;
-  justify-items: start;
-  gap: 0.1rem 0.35rem;
-  width: auto;
+  gap: 0.35rem;
   min-height: 2.1rem;
-  padding: 0.35rem 0.5rem;
+  padding: 0.3rem 0.45rem;
   border: 1px solid var(--rule);
   border-radius: 0.5rem;
   background: var(--bg);
   color: var(--ink);
+}
+.history-day { color: var(--muted); font-size: 0.75rem; font-weight: 700; }
+.history-date { font-size: 0.8rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.history-meals { display: inline-flex; align-items: center; gap: 0.25rem; }
+.history-meal {
+  min-height: 1.7rem;
+  padding: 0.1rem 0.35rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.35rem;
+  background: var(--surface);
+  color: var(--muted);
   font: inherit;
-  font-size: 0.85rem;
-  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 600;
   cursor: pointer;
 }
-.detail-history-list button:hover { border-color: var(--next-accent); background: var(--next-bg); }
-.detail-history-list small { color: var(--muted); font-size: 0.7rem; }
-.history-day { grid-area: day; color: var(--muted); font-size: 0.72rem; font-weight: 700; }
-.history-date { grid-area: date; font-size: 0.8rem; font-weight: 700; font-variant-numeric: tabular-nums; }
-.history-meal { grid-area: meal; color: var(--muted); font-size: 0.72rem; font-weight: 600; }
-.meal.is-history-target { border-color: #4e8fc9; background: #e8f2fc; box-shadow: none; }
-.meal.is-history-target .history-target { background: #d2e7fa; border-radius: 4px; box-shadow: none; }
+.history-meal:hover { border-color: var(--next-accent); background: var(--next-bg); color: var(--ink); }
+.meal.is-history-target { border: 2px solid #4e8fc9; border-radius: 0.75rem; background: transparent; box-shadow: none; }
+.meal.is-history-target .history-target { background: transparent; border-radius: 0; box-shadow: none; }
 
 .active-allergens {
   position: fixed;
@@ -863,11 +885,24 @@ body.detail-open { overflow: hidden; }
 .active-allergen-pill:hover { border-color: var(--strong); }
 .active-allergen-pill .al { width: 1.4rem; height: 1.4rem; min-width: 1.4rem; }
 .active-allergens.is-compact .active-allergen-name { display: none; }
+.active-allergen-clear {
+  flex: 0 0 auto;
+  min-height: 2.25rem;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid var(--strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.active-allergen-clear:hover { background: var(--divider); }
 body.has-active-allergen-bar { padding-bottom: calc(4rem + env(safe-area-inset-bottom)); }
 
 @media (prefers-color-scheme: dark) {
-  .meal.is-history-target { border-color: #70a9df; background: #1b2d40; }
-  .meal.is-history-target .history-target { background: #294866; }
+  .meal.is-history-target { border-color: #70a9df; background: transparent; }
 }
 
 @media (max-width: 859px) {
