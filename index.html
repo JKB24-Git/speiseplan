@@ -22,7 +22,7 @@
       </div>
       <div class="masthead-controls">
         <label class="allergen-toggle" for="hide-allergens">
-          <input id="hide-allergens" type="checkbox" checked aria-controls="plan">
+          <input id="hide-allergens" type="checkbox" aria-controls="plan">
           <span>Allergene</span>
         </label>
         <nav class="week-nav" aria-label="Woche wählen">
@@ -49,11 +49,13 @@
       <div id="plan" class="plan" tabindex="-1"></div>
     </div>
 
-    <section class="legend" aria-labelledby="legend-title">
+    <section id="allergen-legend" class="legend" aria-labelledby="legend-title">
       <h2 id="legend-title">Allergene</h2>
       <ul id="legend"></ul>
     </section>
   </main>
+
+  <div id="active-allergens" class="active-allergens" role="group" aria-label="Aktive Allergene" hidden></div>
 
   <script src="app.js"></script>
 </body>

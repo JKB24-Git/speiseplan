@@ -188,6 +188,9 @@
     weekData: {},
     historyFiles: [],
     pendingNavigation: null,
+    historyReturn: null,
+    restoreDetail: false,
+    detailContext: null,
     hideAllergens: true,
     selectedAllergens: {},
     request: 0,        // schützt vor Durcheinander bei schnellem Klicken
@@ -203,6 +206,8 @@
     prev: $("prev"),
     next: $("next"),
     legend: $("legend"),
+    legendSection: $("allergen-legend"),
+    activeAllergens: $("active-allergens"),
     panel: document.querySelector(".panel"),
     mastheadText: document.querySelector(".masthead-text"),
     hideAllergens: $("hide-allergens")
@@ -253,7 +258,7 @@
   /* ------------------------------------------------------------
      Anzeige
      ------------------------------------------------------------ */
-  function showNotice(message, linkText, linkHref) {
+  function showNotice(message, linkText, linkHref, actionText, action) {
     ui.notice.textContent = "";
     if (!message) { ui.notice.hidden = true; return; }
     ui.notice.appendChild(document.createTextNode(message));
@@ -262,6 +267,12 @@
       var a = el("a", "", linkText);
       a.href = linkHref || "#";
       ui.notice.appendChild(a);
+    }
+    if (actionText && action) {
+      var button = el("button", "notice-action", actionText);
+      button.type = "button";
+      button.addEventListener("click", action);
+      ui.notice.appendChild(button);
     }
     ui.notice.hidden = false;
   }
@@ -328,11 +339,6 @@
         else state.selectedAllergens[code] = true;
         applyAllergenHighlights();
       });
-      chip.addEventListener("dblclick", function (event) {
-        event.preventDefault();
-        state.selectedAllergens = {};
-        applyAllergenHighlights();
-      });
     }
     return chip;
   }
@@ -394,6 +400,14 @@
 
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") closeOpenChip();
+  });
+
+  document.addEventListener("dblclick", function (e) {
+    var chip = e.target.closest ? e.target.closest(".al[data-code]") : null;
+    if (!chip) return;
+    e.preventDefault();
+    state.selectedAllergens = {};
+    applyAllergenHighlights();
   });
 
   /* ---------- Foto/Beschreibung: Vorschau beim Überfahren mit der Maus ---------- */
@@ -553,26 +567,50 @@
   function navigateToOccurrence(occurrences, occurrence) {
     var later = occurrences.filter(function (item) { return item.endedAt > occurrence.endedAt; })[0];
     var destination = later || occurrence;
-    var message = later
-      ? "Danach war dieses Gericht noch einmal am " + formatDate(later.date) + " (" + later.mealLabel + ") eingeplant. Du wirst dorthin weitergeleitet."
-      : "Du wirst zum Speiseplan vom " + formatDate(occurrence.date) + " weitergeleitet.";
+    var origin = state.detailContext || {
+      week: stem(occurrence.file), date: occurrence.dateKey,
+      mealKey: occurrence.mealKey, name: ""
+    };
+    var sameWeek = stem(destination.file) === origin.week;
+    var message = sameWeek
+      ? (later
+        ? "Zum späteren Termin in dieser Woche weitergeleitet (" + formatDate(destination.date) + ")."
+        : "Zum Termin in dieser Woche weitergeleitet (" + formatDate(destination.date) + ").")
+      : "Zur Woche ab " + formatDate(mondayOf(destination.date)) + " weitergeleitet (" + formatDate(destination.date) + ").";
+    state.historyReturn = { origin: origin, name: origin.name };
     state.pendingNavigation = {
       week: stem(destination.file),
       date: destination.dateKey,
       mealKey: destination.mealKey,
-      message: message
+      message: message,
+      returnMenu: true,
+      historyHighlight: true
     };
     closeDetail();
     if (location.hash.replace(/^#/, "") === state.pendingNavigation.week) route();
     else location.hash = state.pendingNavigation.week;
   }
 
+  function returnToHistoryMenu() {
+    if (!state.historyReturn) return;
+    var origin = state.historyReturn.origin;
+    state.pendingNavigation = {
+      week: origin.week,
+      date: origin.date,
+      mealKey: origin.mealKey,
+      message: "Zurück zum Menü.",
+      restoreMenu: true
+    };
+    if (location.hash.replace(/^#/, "") === origin.week) route();
+    else location.hash = origin.week;
+  }
+
   function renderDishHistory(name, dialog) {
     var occurrences = dishOccurrences(name);
     var past = occurrences.filter(function (item) { return item.happened; });
     dialog.historySummary.textContent = past.length
-      ? past.length + "-mal im verfügbaren Schuljahresplan; zuletzt am " + formatDate(past[past.length - 1].date) + " (" + past[past.length - 1].mealLabel + ")."
-      : "Bisher im verfügbaren Schuljahresplan noch nicht als vergangene Mahlzeit eingetragen.";
+      ? past.length + "× · zuletzt " + formatShort(past[past.length - 1].date)
+      : "Bisher noch nicht eingeplant";
     dialog.historyList.textContent = "";
     if (!occurrences.length) {
       dialog.historyList.appendChild(el("li", "detail-history-empty", "Für dieses Schuljahr sind keine Vorkommen in den verfügbaren Wochenplänen gefunden worden."));
@@ -582,8 +620,12 @@
       var li = el("li");
       var button = el("button", "detail-history-entry");
       button.type = "button";
-      button.appendChild(document.createTextNode(occurrence.dayName + ", " + formatDate(occurrence.date) + " · " + occurrence.mealLabel));
-      button.appendChild(el("small", "", occurrence.happened ? " · im Plan gewesen" : " · geplant"));
+      button.title = occurrence.dayName + ", " + formatDate(occurrence.date) + " · " + occurrence.mealLabel + (occurrence.happened ? " · im Plan gewesen" : " · geplant");
+      button.setAttribute("aria-label", button.title + ". Zum Termin springen.");
+      button.appendChild(el("span", "history-day", occurrence.dayName.slice(0, 2)));
+      button.appendChild(el("span", "history-date", formatShort(occurrence.date)));
+      button.appendChild(el("span", "history-meal", occurrence.mealKey === "lunch" ? "M" : "A"));
+      if (!occurrence.happened) button.appendChild(el("small", "history-planned", "geplant"));
       button.addEventListener("click", function () { navigateToOccurrence(occurrences, occurrence); });
       li.appendChild(button);
       dialog.historyList.appendChild(li);
@@ -688,10 +730,11 @@
     }
   }
 
-  function openDetail(name, info, allergens, triggerEl) {
+  function openDetail(name, info, allergens, triggerEl, context) {
     hideHoverBox();
     var d = ensureDetail();
     clearTimeout(d.closeTimer);
+    state.detailContext = context || null;
 
     d.title.textContent = name;
 
@@ -740,6 +783,7 @@
     closeLightbox();
     var d = detail;
     if (!d || d.overlay.hidden) return;
+    clearTimeout(d.closeTimer);
     d.overlay.classList.remove("is-visible");
     document.body.classList.remove("detail-open");
     document.removeEventListener("keydown", onDetailKeydown);
@@ -749,7 +793,7 @@
   }
 
   /* ---------- Ein Gericht (mit oder ohne Foto/Beschreibung) ---------- */
-  function renderDish(item, isMain) {
+  function renderDish(item, isMain, day, meal, monday) {
     var name = item.name;
     var info = isMain ? (state.dishes[name.trim()] || {}) : null;
     var cls = "dish" + (isMain ? " dish-main" : "");
@@ -764,13 +808,20 @@
       : "Schuljahres-Historie ansehen";
 
     var allergens = Array.isArray(item.allergens) ? item.allergens : [];
-    trigger.addEventListener("click", function () { openDetail(name, info, allergens, trigger); });
+    var dayIndex = DAY_NAMES.indexOf(String(day.day || "").trim().toLowerCase());
+    var context = {
+      week: dateKey(monday),
+      date: dateKey(addDays(monday, Math.max(0, dayIndex))),
+      mealKey: meal.key,
+      name: name
+    };
+    trigger.addEventListener("click", function () { openDetail(name, info, allergens, trigger, context); });
     attachHoverPreview(trigger, info.image);
 
     return trigger;
   }
 
-  function renderMeal(day, meal, isNext) {
+  function renderMeal(day, meal, isNext, monday) {
     var items = Array.isArray(day[meal.key]) ? day[meal.key] : [];
     if (!items.length) return null;   // leere Mahlzeit (z. B. Freitagabend): gar nichts anzeigen
 
@@ -788,7 +839,7 @@
       if (!item || typeof item.name !== "string") return;
       var isMain = idx === mainIndex;
       var li = el("li", isMain ? "is-main" : "");
-      li.appendChild(renderDish(item, isMain));
+      li.appendChild(renderDish(item, isMain, day, meal, monday));
       if (Array.isArray(item.allergens) && item.allergens.length) {
         li.appendChild(allergenChips(item.allergens));
       }
@@ -812,13 +863,14 @@
     var title = el("div", "day-title");
     title.appendChild(el("h2", "day-name", name));
     if (date) title.appendChild(el("span", "day-date", formatShort(date)));
+    if (name.toLowerCase() === "freitag") title.appendChild(el("span", "day-extra", "13:00–13:30"));
     head.appendChild(title);
     if (isToday) head.appendChild(el("span", "today-tag", TEXT.today));
     section.appendChild(head);
 
     var next = nextMeal && nextMeal.dayIndex === idx ? nextMeal.key : null;
     MEALS.forEach(function (meal) {
-      var cell = renderMeal(day, meal, meal.key === next);
+      var cell = renderMeal(day, meal, meal.key === next, monday);
       if (cell) section.appendChild(cell);
     });
     return section;
@@ -942,6 +994,30 @@
       });
       item.classList.toggle("has-allergen-match", matches);
     });
+    renderActiveAllergens();
+  }
+
+  function renderActiveAllergens() {
+    if (!ui.activeAllergens) return;
+    ui.activeAllergens.textContent = "";
+    var count = 0;
+    state.allergens.forEach(function (allergen) {
+      if (!state.selectedAllergens[allergen.code]) return;
+      count += 1;
+      var pill = el("button", "active-allergen-pill");
+      pill.type = "button";
+      pill.title = allergen.name + " aus der Auswahl entfernen";
+      pill.setAttribute("aria-label", allergen.name + " abwählen");
+      pill.appendChild(makeChip(allergen.code, false, false));
+      pill.appendChild(el("span", "", allergen.name));
+      pill.appendChild(el("span", "active-allergen-remove", "×"));
+      pill.addEventListener("click", function () {
+        delete state.selectedAllergens[allergen.code];
+        applyAllergenHighlights();
+      });
+      ui.activeAllergens.appendChild(pill);
+    });
+    ui.activeAllergens.hidden = count === 0;
   }
 
   function initAllergenVisibility() {
@@ -949,10 +1025,17 @@
     try { saved = window.localStorage.getItem("speiseplan-hide-allergens"); } catch (e) { /* privater Modus */ }
     state.hideAllergens = saved === null ? true : saved === "true";
     if (!ui.hideAllergens) return;
-    ui.hideAllergens.checked = state.hideAllergens;
+    ui.hideAllergens.checked = !state.hideAllergens;
     document.body.classList.toggle("hide-allergens", state.hideAllergens);
+    var allergenToggle = ui.hideAllergens.closest(".allergen-toggle");
+    if (allergenToggle && ui.legendSection) {
+      allergenToggle.addEventListener("click", function (event) {
+        if (event.target === ui.hideAllergens) return;
+        ui.legendSection.scrollIntoView({ block: "start", behavior: reduceMotion() ? "auto" : "smooth" });
+      });
+    }
     ui.hideAllergens.addEventListener("change", function () {
-      state.hideAllergens = ui.hideAllergens.checked;
+      state.hideAllergens = !ui.hideAllergens.checked;
       document.body.classList.toggle("hide-allergens", state.hideAllergens);
       try { window.localStorage.setItem("speiseplan-hide-allergens", String(state.hideAllergens)); } catch (e) { /* Einstellung gilt bis zum Schließen der Seite */ }
     });
@@ -1004,9 +1087,27 @@
         var pending = state.pendingNavigation;
         if (pending && pending.week === stem(file)) {
           state.pendingNavigation = null;
-          showNotice(pending.message);
+          showNotice(
+            pending.message,
+            null,
+            null,
+            pending.returnMenu ? "Zurück zum Menü" : null,
+            pending.returnMenu ? returnToHistoryMenu : null
+          );
           var target = ui.plan.querySelector('.day[data-day-date="' + pending.date + '"] .meal-' + pending.mealKey);
-          if (target) target.scrollIntoView({ block: "center", behavior: reduceMotion() ? "auto" : "smooth" });
+          if (target) {
+            if (pending.historyHighlight) {
+              target.classList.add("is-history-target");
+              var mainDish = target.querySelector(".dish-main");
+              if (mainDish) mainDish.classList.add("history-target");
+            }
+            target.scrollIntoView({ block: "center", behavior: reduceMotion() ? "auto" : "smooth" });
+            if (pending.restoreMenu) {
+              var returnDish = target.querySelector(".dish-main");
+              if (returnDish) returnDish.click();
+              state.historyReturn = null;
+            }
+          }
         } else if (wasFirstView) {
           var nextMealRow = ui.plan.querySelector(".meal.is-next");
           if (nextMealRow && file === newest) {
@@ -1043,7 +1144,7 @@
   // Uhrzeiten neben "Mittagessen"/"Abendessen" oben in der Leiste (nur am PC sichtbar).
   (function initMealTimeLabels() {
     var lunchEl = $("gh-lunch"), dinnerEl = $("gh-dinner");
-    if (lunchEl) { lunchEl.appendChild(document.createTextNode(" ")); lunchEl.appendChild(el("span", "meal-time", formatRange(MEAL_TIMES.lunch) + " · Fr " + formatRange(FRIDAY_LUNCH_TIME))); }
+    if (lunchEl) { lunchEl.appendChild(document.createTextNode(" ")); lunchEl.appendChild(el("span", "meal-time", formatRange(MEAL_TIMES.lunch))); }
     if (dinnerEl) { dinnerEl.appendChild(document.createTextNode(" ")); dinnerEl.appendChild(el("span", "meal-time", formatRange(MEAL_TIMES.dinner))); }
   })();
 
