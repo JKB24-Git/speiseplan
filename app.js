@@ -364,7 +364,6 @@
   var suppressAllergenClick = false;
   var allergenSuppressTimer = null;
   function toggleAllergen(code, selected) {
-    clearHistoryReturn();
     var shouldSelect = typeof selected === "boolean" ? selected : !state.selectedAllergens[code];
     if (shouldSelect) state.selectedAllergens[code] = true;
     else delete state.selectedAllergens[code];
@@ -616,24 +615,17 @@
   }
 
   function navigateToOccurrence(occurrences, occurrence) {
-    var later = occurrences.filter(function (item) { return item.endedAt > occurrence.endedAt; })[0];
-    var destination = later || occurrence;
+    // Navigate to the exact history entry the user selected.
+    var destination = occurrence;
     var origin = state.detailContext || {
       week: stem(occurrence.file), date: occurrence.dateKey,
       mealKey: occurrence.mealKey, name: ""
     };
-    var sameWeek = stem(destination.file) === origin.week;
-    var message = sameWeek
-      ? (later
-        ? "Zum späteren Termin in dieser Woche weitergeleitet (" + formatDate(destination.date) + ")."
-        : "Zum Termin in dieser Woche weitergeleitet (" + formatDate(destination.date) + ").")
-      : "Zur Woche ab " + formatDate(mondayOf(destination.date)) + " weitergeleitet (" + formatDate(destination.date) + ").";
-    state.historyReturn = state.historyReturn ? null : { origin: origin, name: origin.name };
+    state.historyReturn = { origin: origin, name: origin.name };
     state.pendingNavigation = {
       week: stem(destination.file),
       date: destination.dateKey,
       mealKey: destination.mealKey,
-      message: message,
       historyHighlight: true
     };
     renderActiveAllergens();
@@ -1117,7 +1109,7 @@
       clear.type = "button";
       clear.setAttribute("aria-label", "Alle Allergene abwählen");
       clear.title = "Alle Allergene abwählen";
-      clear.addEventListener("click", function () { clearHistoryReturn(); state.selectedAllergens = {}; applyAllergenHighlights(); });
+      clear.addEventListener("click", function () { state.selectedAllergens = {}; applyAllergenHighlights(); });
       ui.activeAllergens.appendChild(clear);
     }
     ui.activeAllergens.hidden = count === 0;
@@ -1146,7 +1138,6 @@
       });
     }
     ui.hideAllergens.addEventListener("change", function () {
-      clearHistoryReturn();
       state.hideAllergens = !ui.hideAllergens.checked;
       document.body.classList.toggle("hide-allergens", state.hideAllergens);
       try { window.localStorage.setItem("speiseplan-hide-allergens", String(state.hideAllergens)); } catch (e) { /* Einstellung gilt bis zum Schließen der Seite */ }

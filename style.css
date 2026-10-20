@@ -18,6 +18,7 @@
   --today-tag-ink: #111111;
   --next-bg: #f3f6ed;
   --next-accent: #58723a;
+  --history-accent: #4e8fc9;
   --main-bg: #f5f5f5;
   --main-accent: #444444;
   --allergen-muted: #d9d9d9;
@@ -62,6 +63,7 @@
     --today-tag-ink: #ffffff;
     --next-bg: #1b2416;
     --next-accent: #a7c77c;
+    --history-accent: #70a9df;
     --main-bg: #1c1c1c;
     --main-accent: #b8b8b8;
     --allergen-muted: #424242;
@@ -172,7 +174,7 @@ body {
   width: 1.6rem;
   height: 1.6rem;
   margin: 0;
-  accent-color: #a7c77c;
+  accent-color: var(--next-accent);
   cursor: pointer;
 }
 .allergen-scroll {
@@ -217,8 +219,8 @@ body {
 
 @media (max-width: 859px) {
   .masthead-controls { width: 100%; flex-direction: column; align-items: stretch; }
-  .allergen-toggle { align-self: flex-end; justify-content: flex-end; font-size: 1.25rem; min-height: 3.75rem; padding: 0.75rem 1rem; }
-  .allergen-toggle input { width: 1.8rem; height: 1.8rem; }
+  .allergen-toggle { align-self: flex-end; justify-content: flex-end; font-size: 1.4rem; min-height: 4.25rem; padding: 0.85rem 1rem; }
+  .allergen-toggle input { width: 2rem; height: 2rem; }
 }
 
 .week-nav button,
@@ -358,6 +360,15 @@ body {
 }
 .day.is-today .day-date { color: inherit; opacity: 0.8; }
 .day.is-today .today-tag { background: var(--today-tag-bg); color: var(--today-tag-ink); }
+
+@media (min-width: 860px) {
+  .day-title { flex-direction: column; align-items: flex-start; gap: 0; }
+}
+
+@media (max-width: 859px) {
+  /* Friday lunch time is already shown in the meal row on mobile. */
+  .day-extra { display: none; }
+}
 
 .meal + .meal { margin-top: 1.5rem; }
 
@@ -858,18 +869,28 @@ body.detail-open { overflow: hidden; }
 .bottom-dock.has-history-return .active-allergens { max-width: calc(96vw - 8rem); }
 .history-return {
   flex: 0 0 auto;
-  min-height: 2.25rem;
-  padding: 0.3rem 0.65rem;
+  width: 9rem;
+  min-height: 4.5rem;
+  padding: 0.75rem 1.25rem;
   border: 1px solid #ead77c;
   border-radius: 999px;
   background: #fff4bd;
   color: #554713;
   font: inherit;
-  font-size: 0.85rem;
+  font-size: 1.2rem;
   font-weight: 700;
   cursor: pointer;
 }
 .history-return:hover { border-color: #d9bd43; background: #ffed9a; }
+@media (max-width: 859px) {
+  .bottom-dock.has-history-return {
+    flex-direction: column-reverse;
+    width: 94vw;
+    max-width: 94vw;
+  }
+  .bottom-dock.has-history-return .active-allergens { max-width: 94vw; }
+  .history-return { width: 100%; min-height: 3.5rem; font-size: 1.15rem; }
+}
 .active-allergens {
   display: flex;
   flex-wrap: nowrap;
@@ -913,7 +934,7 @@ body.has-bottom-dock { padding-bottom: calc(4rem + env(safe-area-inset-bottom));
   position: relative;
   z-index: 1;
   padding: 1rem 1.1rem 1.1rem;
-  border: 2px solid #4e8fc9;
+  border: 2px solid var(--history-accent);
   border-radius: 0.75rem;
   background: transparent;
   box-shadow: none;
@@ -922,7 +943,7 @@ body.has-bottom-dock { padding-bottom: calc(4rem + env(safe-area-inset-bottom));
 .meal.is-history-target .history-target { background: transparent; border-radius: 0; box-shadow: none; }
 
 @media (prefers-color-scheme: dark) {
-  .meal.is-history-target { border-color: #70a9df; background: transparent; }
+  .meal.is-history-target { background: transparent; }
   .history-return { border-color: #b99c37; background: #54491f; color: #fff1b4; }
   .history-return:hover { border-color: #dfc45b; background: #625522; }
 }
