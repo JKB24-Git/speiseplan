@@ -1115,7 +1115,18 @@ body.has-bottom-dock { padding-bottom: calc(4rem + env(safe-area-inset-bottom));
 /* A narrow surface-colored strip stays attached to the sticky meal headings,
    but only while the yellow notice is present above them. */
 @media (min-width: 860px) {
-  body.has-notice .grid-head { border-top: 0.55rem solid var(--surface); }
+  body.has-notice .grid-head { border-top: 0; }
+  body.has-notice .grid-head::before {
+    content: "";
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 0.55rem;
+    background: var(--surface);
+    pointer-events: none;
+  }
 }
 /* ---------- Druck ---------- */
 @media print {
