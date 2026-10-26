@@ -387,7 +387,7 @@ body {
   border: 2px solid #bd3434;
   border-radius: 0.75rem;
   padding: 1rem 1.1rem 1.1rem;
-  background: transparent;
+  background: rgba(181, 47, 47, 0.09);
   box-shadow: none;
 }
 .shared-meal-banner {
@@ -396,8 +396,8 @@ body {
   margin-bottom: 0.7rem;
   padding: 0.7rem 0.85rem;
   border-radius: 0.45rem;
-  background: transparent;
-  color: #8c2626;
+  background: rgba(181, 47, 47, 0.16);
+  color: #7f1d1d;
   line-height: 1.35;
 }
 .shared-meal-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem 0.7rem; }
@@ -408,23 +408,23 @@ body {
   position: relative;
   display: inline-grid;
   place-items: center;
-  width: 2.2rem;
-  height: 2.2rem;
+  width: 1.7rem;
+  height: 1.7rem;
   padding: 0;
-  border: 2.5px solid currentColor;
+  border: 1.5px solid rgba(127, 29, 29, 0.45);
   border-radius: 50%;
   background: transparent;
-  color: #8c2626;
+  color: #7f1d1d;
   font: inherit;
   cursor: pointer;
 }
-.shared-meal-info:hover { background: rgba(140, 38, 38, 0.08); }
+.shared-meal-info:hover { background: rgba(181, 47, 47, 0.14); }
 .shared-meal-info-icon {
   display: inline-block;
   font-family: var(--sans);
-  font-size: 1.15rem;
-  font-style: italic;
-  font-weight: 850;
+  font-size: 0.9rem;
+  font-style: normal;
+  font-weight: 650;
   line-height: 1;
 }
 
@@ -1030,10 +1030,10 @@ body.has-bottom-dock { padding-bottom: calc(4rem + env(safe-area-inset-bottom));
 .meal.is-history-target .history-target { background: transparent; border-radius: 0; box-shadow: none; }
 
 @media (prefers-color-scheme: dark) {
-  .meal.is-shared { border-color: #e27777; background: transparent; box-shadow: none; }
-  .shared-meal-banner { background: transparent; color: #ffaaaa; }
+  .meal.is-shared { border-color: #e27777; background: rgba(226, 119, 119, 0.09); box-shadow: none; }
+  .shared-meal-banner { background: rgba(226, 119, 119, 0.16); color: #ffc4c4; }
   .shared-meal-note { color: #ffaaaa; }
-  .shared-meal-info { color: #ffaaaa; }
+  .shared-meal-info { color: #ffc4c4; border-color: rgba(255, 196, 196, 0.45); background: transparent; }
   .meal.is-history-target { background: transparent; }
   .history-return { border-color: #b99c37; background: #54491f; color: #fff1b4; }
   .history-return:hover { border-color: #dfc45b; background: #625522; }
