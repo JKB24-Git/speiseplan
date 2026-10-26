@@ -268,7 +268,8 @@
       return;
     }
     document.body.classList.add("has-notice");
-    document.documentElement.style.setProperty("--notice-sticky-height", ui.notice.offsetHeight + "px");
+    var noticeMarginTop = parseFloat(window.getComputedStyle(ui.notice).marginTop) || 0;
+    document.documentElement.style.setProperty("--notice-sticky-height", (ui.notice.offsetHeight + noticeMarginTop) + "px");
   }
 
   function showNotice(message, linkText, linkHref, actionText, action) {
