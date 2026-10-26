@@ -387,8 +387,8 @@ body {
   border: 2px solid #bd3434;
   border-radius: 0.75rem;
   padding: 1rem 1.1rem 1.1rem;
-  background: #fff7f7;
-  box-shadow: 0 3px 12px rgba(130, 20, 20, 0.12);
+  background: transparent;
+  box-shadow: none;
 }
 .shared-meal-banner {
   position: relative;
@@ -396,44 +396,38 @@ body {
   margin-bottom: 0.7rem;
   padding: 0.7rem 0.85rem;
   border-radius: 0.45rem;
-  background: #b52f2f;
-  color: #fff;
+  background: transparent;
+  color: #8c2626;
   line-height: 1.35;
 }
 .shared-meal-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem 0.7rem; }
-.shared-meal-title { font-size: 1.08rem; font-weight: 800; color: #fff; }
-.shared-meal-time { margin-top: 0.2rem; color: #fff; font-size: 1.2rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.shared-meal-title { font-size: 1.08rem; font-weight: 800; color: inherit; }
+.shared-meal-time { margin-top: 0.2rem; color: inherit; font-size: 1.2rem; font-weight: 800; font-variant-numeric: tabular-nums; }
 .shared-meal-note { margin: 0.85rem 0 0.2rem; color: #8c2626; font-size: 0.95rem; font-weight: 650; line-height: 1.45; }
 .shared-meal-info {
   position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  min-height: 2.2rem;
-  padding: 0.15rem 0.6rem 0.15rem 0.35rem;
-  border: 2px solid #fff;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
-  font: inherit;
-  font-size: 0.88rem;
-  font-weight: 750;
-  cursor: pointer;
-}
-.shared-meal-info:hover { background: rgba(255, 255, 255, 0.24); }
-.shared-meal-info-icon {
   display: inline-grid;
   place-items: center;
-  width: 1.25rem;
-  height: 1.25rem;
-  border: 2px solid currentColor;
+  width: 2.2rem;
+  height: 2.2rem;
+  padding: 0;
+  border: 2.5px solid currentColor;
   border-radius: 50%;
-  font-family: Georgia, serif;
-  font-size: 0.9rem;
+  background: transparent;
+  color: #8c2626;
+  font: inherit;
+  cursor: pointer;
+}
+.shared-meal-info:hover { background: rgba(140, 38, 38, 0.08); }
+.shared-meal-info-icon {
+  display: inline-block;
+  font-family: var(--sans);
+  font-size: 1.15rem;
   font-style: italic;
-  font-weight: 800;
+  font-weight: 850;
   line-height: 1;
 }
+
 .shared-meal-tip {
   position: absolute;
   z-index: 20;
@@ -460,7 +454,7 @@ body {
   .shared-meal-info:focus-visible .shared-meal-tip { opacity: 1; visibility: visible; }
 }
 .shared-meal-info.is-open .shared-meal-tip { opacity: 1; visibility: visible; }
-.shared-meal-info:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.shared-meal-info:focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
 
 @media (min-width: 860px) {
   .meal.is-shared .meal-label {
@@ -1036,9 +1030,10 @@ body.has-bottom-dock { padding-bottom: calc(4rem + env(safe-area-inset-bottom));
 .meal.is-history-target .history-target { background: transparent; border-radius: 0; box-shadow: none; }
 
 @media (prefers-color-scheme: dark) {
-  .meal.is-shared { border-color: #e27777; background: #241717; box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3); }
-  .shared-meal-banner { background: #8e2525; color: #fff; }
+  .meal.is-shared { border-color: #e27777; background: transparent; box-shadow: none; }
+  .shared-meal-banner { background: transparent; color: #ffaaaa; }
   .shared-meal-note { color: #ffaaaa; }
+  .shared-meal-info { color: #ffaaaa; }
   .meal.is-history-target { background: transparent; }
   .history-return { border-color: #b99c37; background: #54491f; color: #fff1b4; }
   .history-return:hover { border-color: #dfc45b; background: #625522; }

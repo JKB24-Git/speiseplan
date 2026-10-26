@@ -952,7 +952,6 @@
       info.setAttribute("aria-expanded", "false");
       info.setAttribute("aria-describedby", infoId);
       info.appendChild(el("span", "shared-meal-info-icon", "i"));
-      info.appendChild(el("span", "shared-meal-info-label", "Info"));
       var tip = el("span", "shared-meal-tip", sharedDinner.reservationNote || "Bitte den Sitzplatz frühzeitig reservieren.");
       tip.id = infoId;
       info.appendChild(tip);
