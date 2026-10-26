@@ -1,0 +1,75 @@
+{
+  "week": "26.10. bis 30.10.2026",
+  "days": [
+    {
+      "day": "Montag",
+      "lunch": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Geflügel-Ananas-Salat", "allergens": ["C", "L", "F", "M", "N"] },
+        { "name": "Schweins-Geschnetzeltes mit Reis, Bohnen", "allergens": ["G", "L", "F"] },
+        { "name": "Trauben", "allergens": [] }
+      ],
+      "dinner": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Geflügel-Ananas-Salat", "allergens": ["C", "L", "F", "M", "N"] },
+        { "name": "Nudel mit Tomaten Safransauce und Räucherlachs", "allergens": ["D", "A", "G", "L", "F", "N"] },
+        { "name": "Schokosahneschnitte", "allergens": ["C", "A", "G", "L"] }
+      ]
+    },
+    {
+      "day": "Dienstag",
+      "lunch": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Gekochte Eier", "allergens": ["C"] },
+        { "name": "Schlutzkrapfen mit Parmesan und Olivenöl", "allergens": ["A", "C", "G"] },
+        { "name": "Pudding", "allergens": ["A", "C", "F", "G", "H"] }
+      ],
+      "dinner": [
+        { "name": "Gemeinsames Abendessen um 18.30 Uhr (Achtung: Sitzplatzreservierung!)", "allergens": [] },
+        { "name": "Wurst-Selchfleisch, Sauerkraut mit Semmelknödel", "allergens": ["G", "L", "F", "A", "C"] },
+        { "name": "Bauernkrapfen", "allergens": ["A", "C", "G"] },
+        { "name": "Anschließend im Garten: gebratene Kastanien und Tee", "allergens": [] }
+      ]
+    },
+    {
+      "day": "Mittwoch",
+      "lunch": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Gegrillte Zucchini mit Mozzarelline", "allergens": ["G"] },
+        { "name": "Lasagne Bolognese", "allergens": ["A", "C", "G", "L"] },
+        { "name": "Kompott", "allergens": [] }
+      ],
+      "dinner": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Gegrillte Zucchini mit Mozzarelline", "allergens": ["G"] },
+        { "name": "Kartoffelnocken mit Pilz-Schinken-Rahmsauce", "allergens": ["A", "C", "G", "L", "F"] },
+        { "name": "Bananencreme", "allergens": ["G"] }
+      ]
+    },
+    {
+      "day": "Donnerstag",
+      "lunch": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Tramezzinoschnitte", "allergens": ["A", "C", "D", "G", "M"] },
+        { "name": "Schollenfilet gebacken, Salzkartoffel und Mischgemüse", "allergens": ["A", "D"] },
+        { "name": "Obstsalat", "allergens": [] }
+      ],
+      "dinner": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Tramezzinoschnitte", "allergens": ["A", "C", "D", "G", "M"] },
+        { "name": "Hirtenmaccheroni", "allergens": ["A", "C", "G", "L", "F"] },
+        { "name": "Marmorkuchen", "allergens": ["A", "C", "G"] }
+      ]
+    },
+    {
+      "day": "Freitag",
+      "lunch": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Kleiner Snack", "allergens": [] },
+        { "name": "Knödel", "allergens": ["A", "C", "G"] },
+        { "name": "Obst", "allergens": [] }
+      ],
+      "dinner": []
+    }
+  ]
+}
