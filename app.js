@@ -900,13 +900,53 @@
   }
 
   function renderMeal(day, meal, isNext, monday) {
-    var items = Array.isArray(day[meal.key]) ? day[meal.key] : [];
-    if (!items.length) return null;   // leere Mahlzeit (z. B. Freitagabend): gar nichts anzeigen
+    var items = Array.isArray(day[meal.key]) ? day[meal.key].slice() : [];
+    var sharedDinner = null;
+    if (meal.key === "dinner") {
+      var explicitSharedDinner = day.sharedDinner && typeof day.sharedDinner === "object" ? day.sharedDinner : null;
+      var announcementIndex = items.findIndex(function (item) {
+        return item && typeof item.name === "string" && /^Gemeinsames Abendessen\b/i.test(item.name.trim());
+      });
+      var afterIndex = items.findIndex(function (item) {
+        return item && typeof item.name === "string" && /^Anschließend\b/i.test(item.name.trim());
+      });
+      if (explicitSharedDinner || announcementIndex >= 0) {
+        var announcement = announcementIndex >= 0 ? items[announcementIndex] : null;
+        var detectedTitle = announcement ? announcement.name
+          .replace(/\s*\([^)]*Sitzplatzreservierung[^)]*\)\s*/i, " ")
+          .replace(/\bum\s+(\d{1,2})[.:](\d{2})\s+Uhr\b/i, "· $1:$2 Uhr")
+          .trim() : "Gemeinsames Abendessen";
+        sharedDinner = {
+          title: explicitSharedDinner && explicitSharedDinner.title || detectedTitle,
+          reservationNote: explicitSharedDinner && explicitSharedDinner.reservationNote || "Bitte den Sitzplatz frühzeitig reservieren.",
+          note: explicitSharedDinner && explicitSharedDinner.note || (afterIndex >= 0 ? items[afterIndex].name : "")
+        };
+        items = items.filter(function (_, index) { return index !== announcementIndex && index !== afterIndex; });
+      }
+    }
+
+    if (!items.length && !sharedDinner) return null;   // leere Mahlzeit (z. B. Freitagabend): gar nichts anzeigen
 
     // Das Hauptgericht ist immer das vorletzte Gericht der Mahlzeit (danach kommt nur noch der Nachtisch/Obst).
     var mainIndex = items.length >= 2 ? items.length - 2 : (items.length === 1 ? 0 : -1);
 
     var cell = el("div", "meal meal-" + meal.key + (isNext ? " is-next" : ""));
+    if (sharedDinner) {
+      cell.classList.add("is-shared");
+      var shared = el("div", "shared-meal-banner");
+      shared.appendChild(el("strong", "shared-meal-title", sharedDinner.title || "Gemeinsames Abendessen"));
+      var info = el("button", "shared-meal-info", "i");
+      var infoId = "shared-meal-info-" + dateKey(monday) + "-" + meal.key;
+      info.type = "button";
+      info.setAttribute("aria-label", "Hinweis zur Sitzplatzreservierung");
+      info.setAttribute("aria-expanded", "false");
+      info.setAttribute("aria-describedby", infoId);
+      info.appendChild(el("span", "shared-meal-tip", sharedDinner.reservationNote || "Bitte den Sitzplatz frühzeitig reservieren."));
+      info.querySelector(".shared-meal-tip").id = infoId;
+      shared.appendChild(info);
+      if (sharedDinner.note) shared.appendChild(el("p", "shared-meal-note", sharedDinner.note));
+      cell.appendChild(shared);
+    }
     var label = el("h3", "meal-label");
     label.appendChild(document.createTextNode(meal.label + " "));
     label.appendChild(el("span", "meal-time", formatRange(mealTimeFor(day, meal.key))));
@@ -1240,6 +1280,34 @@
   });
   window.addEventListener("scroll", hideHoverBox, { passive: true });
   window.addEventListener("resize", hideHoverBox);
+  // Shared-meal info is hoverable on desktop and tap-to-toggle on touch screens.
+  document.addEventListener("click", function (event) {
+    var info = event.target.closest && event.target.closest(".shared-meal-info");
+    if (info && !isFinePointer()) {
+      var show = !info.classList.contains("is-open");
+      document.querySelectorAll(".shared-meal-info.is-open").forEach(function (openInfo) {
+        openInfo.classList.remove("is-open");
+        openInfo.setAttribute("aria-expanded", "false");
+      });
+      if (show) {
+        info.classList.add("is-open");
+        info.setAttribute("aria-expanded", "true");
+      }
+      event.stopPropagation();
+    } else if (!info) {
+      document.querySelectorAll(".shared-meal-info.is-open").forEach(function (openInfo) {
+        openInfo.classList.remove("is-open");
+        openInfo.setAttribute("aria-expanded", "false");
+      });
+    }
+  });
+  document.addEventListener("keydown", function (event) {
+    if (event.key !== "Escape") return;
+    document.querySelectorAll(".shared-meal-info.is-open").forEach(function (openInfo) {
+      openInfo.classList.remove("is-open");
+      openInfo.setAttribute("aria-expanded", "false");
+    });
+  });
 
   /* ------------------------------------------------------------
      Start

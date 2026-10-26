@@ -383,6 +383,73 @@ body {
   scroll-margin-top: 7rem;
 }
 .meal.is-next .meal-label { border-color: var(--next-accent); border-bottom-width: 3px; }
+.meal.is-shared {
+  border: 2px solid #bd3434;
+  border-radius: 0.75rem;
+  padding: 1rem 1.1rem 1.1rem;
+  background: #fff7f7;
+  box-shadow: 0 3px 12px rgba(130, 20, 20, 0.12);
+}
+.shared-meal-banner {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin-bottom: 0.75rem;
+  padding: 0.65rem 2.8rem 0.65rem 0.8rem;
+  border-radius: 0.45rem;
+  background: #fbe6e6;
+  color: #7f1d1d;
+  line-height: 1.35;
+}
+.shared-meal-title { font-size: 1.05rem; font-weight: 800; }
+.shared-meal-note { flex-basis: 100%; margin: 0.3rem 0 0; font-size: 0.92rem; color: #663737; }
+.shared-meal-info {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.45rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  padding: 0;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.shared-meal-tip {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 0.55rem);
+  right: -0.45rem;
+  width: min(17rem, calc(100vw - 3rem));
+  padding: 0.7rem 0.85rem;
+  border-radius: 0.45rem;
+  background: #272727;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: left;
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .shared-meal-info:hover .shared-meal-tip,
+  .shared-meal-info:focus-visible .shared-meal-tip { opacity: 1; visibility: visible; }
+}
+.shared-meal-info.is-open .shared-meal-tip { opacity: 1; visibility: visible; }
+.shared-meal-info:focus-visible { outline-color: #7f1d1d; }
 
 .meal-label {
   margin: 0 0 0.5rem;
@@ -943,6 +1010,9 @@ body.has-bottom-dock { padding-bottom: calc(4rem + env(safe-area-inset-bottom));
 .meal.is-history-target .history-target { background: transparent; border-radius: 0; box-shadow: none; }
 
 @media (prefers-color-scheme: dark) {
+  .meal.is-shared { border-color: #e27777; background: #241717; box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3); }
+  .shared-meal-banner { background: #382020; color: #ffcaca; }
+  .shared-meal-note { color: #e0baba; }
   .meal.is-history-target { background: transparent; }
   .history-return { border-color: #b99c37; background: #54491f; color: #fff1b4; }
   .history-return:hover { border-color: #dfc45b; background: #625522; }
