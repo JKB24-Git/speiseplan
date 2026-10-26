@@ -931,25 +931,39 @@
     var mainIndex = items.length >= 2 ? items.length - 2 : (items.length === 1 ? 0 : -1);
 
     var cell = el("div", "meal meal-" + meal.key + (isNext ? " is-next" : ""));
+    var sharedTime = "18:30";
     if (sharedDinner) {
+      var rawSharedTitle = sharedDinner.title || "Gemeinsames Abendessen";
+      var timeMatch = String(sharedDinner.time || rawSharedTitle).match(/(\d{1,2})[.:](\d{2})/);
+      if (timeMatch) sharedTime = pad(Number(timeMatch[1])) + ":" + timeMatch[2];
+      var sharedTitle = rawSharedTitle
+        .replace(/\s*[·–-]\s*\d{1,2}[.:]\d{2}(?:\s*Uhr)?\s*$/i, "")
+        .replace(/\s+um\s+\d{1,2}[.:]\d{2}\s*(?:Uhr)?\s*$/i, "")
+        .trim();
+
       cell.classList.add("is-shared");
       var shared = el("div", "shared-meal-banner");
-      shared.appendChild(el("strong", "shared-meal-title", sharedDinner.title || "Gemeinsames Abendessen"));
-      var info = el("button", "shared-meal-info", "i");
+      var heading = el("div", "shared-meal-heading");
+      heading.appendChild(el("strong", "shared-meal-title", sharedTitle));
+      var info = el("button", "shared-meal-info");
       var infoId = "shared-meal-info-" + dateKey(monday) + "-" + meal.key;
       info.type = "button";
-      info.setAttribute("aria-label", "Hinweis zur Sitzplatzreservierung");
+      info.setAttribute("aria-label", "Info zur Sitzplatzreservierung");
       info.setAttribute("aria-expanded", "false");
       info.setAttribute("aria-describedby", infoId);
-      info.appendChild(el("span", "shared-meal-tip", sharedDinner.reservationNote || "Bitte den Sitzplatz frühzeitig reservieren."));
-      info.querySelector(".shared-meal-tip").id = infoId;
-      shared.appendChild(info);
-      if (sharedDinner.note) shared.appendChild(el("p", "shared-meal-note", sharedDinner.note));
+      info.appendChild(el("span", "shared-meal-info-icon", "i"));
+      info.appendChild(el("span", "shared-meal-info-label", "Info"));
+      var tip = el("span", "shared-meal-tip", sharedDinner.reservationNote || "Bitte den Sitzplatz frühzeitig reservieren.");
+      tip.id = infoId;
+      info.appendChild(tip);
+      heading.appendChild(info);
+      shared.appendChild(heading);
+      shared.appendChild(el("div", "shared-meal-time", sharedTime));
       cell.appendChild(shared);
     }
     var label = el("h3", "meal-label");
     label.appendChild(document.createTextNode(meal.label + " "));
-    label.appendChild(el("span", "meal-time", formatRange(mealTimeFor(day, meal.key))));
+    label.appendChild(el("span", "meal-time", sharedDinner ? sharedTime : formatRange(mealTimeFor(day, meal.key))));
     cell.appendChild(label);
 
     var list = el("ul", "dishes");
@@ -964,6 +978,19 @@
       list.appendChild(li);
     });
     cell.appendChild(list);
+    if (sharedDinner && sharedDinner.note) {
+      var note = el("p", "shared-meal-note");
+      var colonAt = String(sharedDinner.note).indexOf(":");
+      if (colonAt >= 0) {
+        note.appendChild(document.createTextNode(String(sharedDinner.note).slice(0, colonAt + 1)));
+        note.appendChild(el("br"));
+        note.appendChild(document.createTextNode(String(sharedDinner.note).slice(colonAt + 1).trim()));
+      } else {
+        note.textContent = sharedDinner.note;
+      }
+      cell.appendChild(note);
+    }
+
     return cell;
   }
 
@@ -1283,7 +1310,7 @@
   // Shared-meal info is hoverable on desktop and tap-to-toggle on touch screens.
   document.addEventListener("click", function (event) {
     var info = event.target.closest && event.target.closest(".shared-meal-info");
-    if (info && !isFinePointer()) {
+    if (info && !canHover()) {
       var show = !info.classList.contains("is-open");
       document.querySelectorAll(".shared-meal-info.is-open").forEach(function (openInfo) {
         openInfo.classList.remove("is-open");
