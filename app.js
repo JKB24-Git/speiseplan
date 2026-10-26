@@ -283,6 +283,12 @@
       ui.notice.appendChild(document.createTextNode(" "));
       var a = el("a", "", linkText);
       a.href = linkHref || "#";
+      if (linkText === TEXT.toCurrent || linkText === TEXT.toLatest) {
+        var destinationWeek = (linkHref || "").replace(/^#/, "");
+        a.addEventListener("click", function () {
+          state.pendingNavigation = { week: destinationWeek, scrollToNextMeal: true };
+        });
+      }
       ui.notice.appendChild(a);
     }
     if (actionText && action) {
@@ -1261,7 +1267,15 @@
           state.pendingNavigation = null;
           if (pending.historyHighlight || pending.restoreMenu) showNotice("");
           else showNotice(pending.message || "");
-          var target = ui.plan.querySelector('.day[data-day-date="' + pending.date + '"] .meal-' + pending.mealKey);
+          if (pending.scrollToNextMeal) {
+            var redirectedNextMeal = ui.plan.querySelector(".meal.is-next");
+            if (redirectedNextMeal && file === newest) {
+              redirectedNextMeal.scrollIntoView({ block: "center", behavior: reduceMotion() ? "auto" : "smooth" });
+            }
+          }
+          var target = pending.date && pending.mealKey
+            ? ui.plan.querySelector('.day[data-day-date="' + pending.date + '"] .meal-' + pending.mealKey)
+            : null;
           if (target) {
             if (pending.historyHighlight) {
               target.classList.add("is-history-target");
