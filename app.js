@@ -270,12 +270,11 @@
 
   function normalizeSeatingPlan(data) {
     return Array.isArray(data) ? data.filter(function (person) {
-      return person && Number.isFinite(Number(person.platz)) && Number.isFinite(Number(person.tisch))
+      return person && Number.isInteger(Number(person.platz)) && Number(person.platz) >= 1 && Number(person.platz) <= 140
         && String(person.vorname || "").trim() && String(person.nachname || "").trim();
     }).map(function (person) {
       return {
         platz: Number(person.platz),
-        tisch: Number(person.tisch),
         vorname: String(person.vorname).trim(),
         nachname: String(person.nachname).trim()
       };
@@ -760,7 +759,7 @@
     var people = Array.isArray(source) ? source.slice() : [];
     var needle = String(query || "").trim().toLocaleLowerCase("de");
     var filtered = people.filter(function (person) {
-      return (person.vorname + " " + person.nachname + " " + person.platz + " " + person.tisch)
+      return (person.vorname + " " + person.nachname + " " + person.platz)
         .toLocaleLowerCase("de").indexOf(needle) >= 0;
     });
     filtered.sort(sortMode === "number"
@@ -775,25 +774,52 @@
     }
     seatingDialog.empty.hidden = true;
     seatingDialog.content.hidden = false;
-    var grouped = {};
+    var byPlace = {};
+    var matchingPlaces = {};
+    people.forEach(function (person) { byPlace[person.platz] = person; });
     filtered.forEach(function (person) {
-      (grouped[person.tisch] || (grouped[person.tisch] = [])).push(person);
+      if (needle) matchingPlaces[person.platz] = true;
     });
-    Object.keys(grouped).sort(function (a, b) { return Number(a) - Number(b); }).forEach(function (tableNumber) {
+    var layout = el("div", "seatplan-layout");
+    var tables = el("div", "seatplan-tables");
+    [3, 2, 1, 6, 5, 4, 9, 8, 7, 12, 11, 10, 13, 14].forEach(function (tableNumber) {
       var table = el("section", "seatplan-table");
       table.setAttribute("aria-label", "Tisch " + tableNumber);
-      var seats = grouped[tableNumber].slice().sort(function (a, b) { return a.platz - b.platz; });
-      var split = Math.ceil(seats.length / 2);
       var topRow = el("div", "seatplan-seat-row");
       var bottomRow = el("div", "seatplan-seat-row");
-      seats.forEach(function (person, index) {
-        (index < split ? topRow : bottomRow).appendChild(el("span", "seatplan-seat", String(person.platz)));
-      });
+      var firstSeat = (tableNumber - 1) * 10 + 1;
+      var topSeats = [firstSeat + 4, firstSeat + 3, firstSeat + 2, firstSeat + 1, firstSeat];
+      var bottomSeats = [firstSeat + 5, firstSeat + 6, firstSeat + 7, firstSeat + 8, firstSeat + 9];
+      function addSeat(row, seatNumber) {
+        var person = byPlace[seatNumber];
+        var seat = el(person ? "button" : "span", "seatplan-seat" + (person ? "" : " is-empty") + (matchingPlaces[seatNumber] ? " is-match" : ""), String(seatNumber));
+        if (person) {
+          seat.type = "button";
+          seat.title = person.vorname + " " + person.nachname + " suchen";
+          seat.addEventListener("click", function () {
+            seatingDialog.search.value = person.vorname + " " + person.nachname;
+            renderSeatingPlan(seatingDialog.search.value, seatingDialog.sort.value, seatingDialog.date);
+          });
+        }
+        seat.setAttribute("aria-label", person
+          ? "Platz " + seatNumber + ": " + person.vorname + " " + person.nachname
+          : "Platz " + seatNumber + " frei");
+        row.appendChild(seat);
+      }
+      topSeats.forEach(function (seatNumber) { addSeat(topRow, seatNumber); });
+      bottomSeats.forEach(function (seatNumber) { addSeat(bottomRow, seatNumber); });
       table.appendChild(topRow);
       table.appendChild(el("div", "seatplan-table-label", "Tisch " + tableNumber));
       table.appendChild(bottomRow);
-      seatingDialog.chart.appendChild(table);
+      tables.appendChild(table);
     });
+    var entrance = el("aside", "seatplan-entrance");
+    entrance.setAttribute("aria-label", "Eingang Speisesaal");
+    entrance.appendChild(el("div", "seatplan-door", "← Eingang Speisesaal"));
+    entrance.appendChild(el("div", "seatplan-door", "← Eingang Speisesaal"));
+    layout.appendChild(tables);
+    layout.appendChild(entrance);
+    seatingDialog.chart.appendChild(layout);
 
     seatingDialog.list.textContent = "";
     if (!filtered.length) {
@@ -801,9 +827,10 @@
       return;
     }
     filtered.forEach(function (person) {
+      var tableNumber = Math.ceil(person.platz / 10);
       var row = el("li", "seatplan-person");
       row.appendChild(el("span", "seatplan-person-name", person.vorname + " " + person.nachname));
-      row.appendChild(el("span", "seatplan-person-meta", "Nr. " + person.platz + " · Tisch " + person.tisch));
+      row.appendChild(el("span", "seatplan-person-meta", "Platz " + person.platz + " · Tisch " + tableNumber));
       seatingDialog.list.appendChild(row);
     });
   }
@@ -825,14 +852,14 @@
       title.id = "seatplan-title";
       var empty = el("p", "seatplan-empty", "Für dieses gemeinsame Essen gibt es noch keinen Sitzplan.");
       var content = el("div", "seatplan-content");
-      var chartTitle = el("h4", "seatplan-section-title", "Tische");
+      var chartTitle = el("h4", "seatplan-section-title seatplan-chart-title", "Tischplan");
       var chart = el("div", "seatplan-chart");
-      var peopleTitle = el("h4", "seatplan-section-title", "Personen");
+      var peopleTitle = el("h4", "seatplan-section-title seatplan-people-title", "Personen");
       var controls = el("div", "seatplan-controls");
       var search = el("input", "seatplan-search");
       search.type = "search";
-      search.placeholder = "Name oder Nummer suchen";
-      search.setAttribute("aria-label", "Sitzplan nach Name oder Nummer durchsuchen");
+      search.placeholder = "Name oder Platznummer suchen";
+      search.setAttribute("aria-label", "Personen nach Name oder Platznummer durchsuchen");
       var sort = el("select", "seatplan-sort");
       sort.setAttribute("aria-label", "Personen sortieren");
       var nameOption = el("option", "", "Nach Name");
