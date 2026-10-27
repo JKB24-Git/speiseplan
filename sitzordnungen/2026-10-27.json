@@ -1,0 +1,824 @@
+[
+  {
+    "platz": 1,
+    "nachname": "Rottensteiner",
+    "vorname": "Jonas",
+    "tisch": 8
+  },
+  {
+    "platz": 2,
+    "nachname": "Kröss",
+    "vorname": "Philipp",
+    "tisch": 11
+  },
+  {
+    "platz": 3,
+    "nachname": "Brunner",
+    "vorname": "Thomas",
+    "tisch": 10
+  },
+  {
+    "platz": 4,
+    "nachname": "Pichler",
+    "vorname": "Jonathan",
+    "tisch": 2
+  },
+  {
+    "platz": 5,
+    "nachname": "Schrott",
+    "vorname": "Mara",
+    "tisch": 5
+  },
+  {
+    "platz": 6,
+    "nachname": "Psenner",
+    "vorname": "Emma",
+    "tisch": 7
+  },
+  {
+    "platz": 7,
+    "nachname": "Carli",
+    "vorname": "Simon",
+    "tisch": 2
+  },
+  {
+    "platz": 8,
+    "nachname": "Heinisch",
+    "vorname": "Alex",
+    "tisch": 8
+  },
+  {
+    "platz": 9,
+    "nachname": "Rouchdi",
+    "vorname": "Nissar",
+    "tisch": 8
+  },
+  {
+    "platz": 10,
+    "nachname": "Kerschbamer",
+    "vorname": "Clarissa",
+    "tisch": 11
+  },
+  {
+    "platz": 11,
+    "nachname": "Mahut",
+    "vorname": "Alex",
+    "tisch": 13
+  },
+  {
+    "platz": 12,
+    "nachname": "Larcher",
+    "vorname": "Konstantin",
+    "tisch": 1
+  },
+  {
+    "platz": 13,
+    "nachname": "Kofler",
+    "vorname": "Felix",
+    "tisch": 4
+  },
+  {
+    "platz": 14,
+    "nachname": "Patscheider",
+    "vorname": "Lenny",
+    "tisch": 9
+  },
+  {
+    "platz": 15,
+    "nachname": "Geler",
+    "vorname": "Jakob",
+    "tisch": 2
+  },
+  {
+    "platz": 16,
+    "nachname": "Mahlknecht",
+    "vorname": "Jacob",
+    "tisch": 2
+  },
+  {
+    "platz": 17,
+    "nachname": "Köhl",
+    "vorname": "Marian",
+    "tisch": 2
+  },
+  {
+    "platz": 18,
+    "nachname": "Greis",
+    "vorname": "Tobias",
+    "tisch": 12
+  },
+  {
+    "platz": 19,
+    "nachname": "Schweigl",
+    "vorname": "Manuel",
+    "tisch": 9
+  },
+  {
+    "platz": 20,
+    "nachname": "Cadonau",
+    "vorname": "Lara",
+    "tisch": 5
+  },
+  {
+    "platz": 21,
+    "nachname": "Folie",
+    "vorname": "Katharina",
+    "tisch": 3
+  },
+  {
+    "platz": 22,
+    "nachname": "Folie",
+    "vorname": "Annalena",
+    "tisch": 3
+  },
+  {
+    "platz": 23,
+    "nachname": "Schöpf",
+    "vorname": "Mara",
+    "tisch": 3
+  },
+  {
+    "platz": 24,
+    "nachname": "Larch",
+    "vorname": "Isabel",
+    "tisch": 3
+  },
+  {
+    "platz": 25,
+    "nachname": "Dejori",
+    "vorname": "Dominik",
+    "tisch": 7
+  },
+  {
+    "platz": 26,
+    "nachname": "Riedl",
+    "vorname": "Alex",
+    "tisch": 12
+  },
+  {
+    "platz": 27,
+    "nachname": "Kerschbaumer",
+    "vorname": "Sarah",
+    "tisch": 3
+  },
+  {
+    "platz": 28,
+    "nachname": "Schönthaler",
+    "vorname": "Alex",
+    "tisch": 6
+  },
+  {
+    "platz": 29,
+    "nachname": "Gamper",
+    "vorname": "Marie",
+    "tisch": 3
+  },
+  {
+    "platz": 30,
+    "nachname": "Ratschiller",
+    "vorname": "Franziska",
+    "tisch": 3
+  },
+  {
+    "platz": 31,
+    "nachname": "Obkircher",
+    "vorname": "Mattias",
+    "tisch": 4
+  },
+  {
+    "platz": 32,
+    "nachname": "Kofler",
+    "vorname": "Felix",
+    "tisch": 10
+  },
+  {
+    "platz": 33,
+    "nachname": "Pedross",
+    "vorname": "Theo",
+    "tisch": 8
+  },
+  {
+    "platz": 34,
+    "nachname": "Kofler",
+    "vorname": "Letizia",
+    "tisch": 4
+  },
+  {
+    "platz": 35,
+    "nachname": "Perger",
+    "vorname": "Gabriela",
+    "tisch": 11
+  },
+  {
+    "platz": 36,
+    "nachname": "Schwienbacher",
+    "vorname": "Kilian",
+    "tisch": 7
+  },
+  {
+    "platz": 37,
+    "nachname": "Perger",
+    "vorname": "Jakob",
+    "tisch": 8
+  },
+  {
+    "platz": 38,
+    "nachname": "Piccolruaz",
+    "vorname": "Laurin",
+    "tisch": 5
+  },
+  {
+    "platz": 39,
+    "nachname": "Santa",
+    "vorname": "Raffael",
+    "tisch": 9
+  },
+  {
+    "platz": 40,
+    "nachname": "Grossi",
+    "vorname": "Teresa",
+    "tisch": 4
+  },
+  {
+    "platz": 41,
+    "nachname": "Prenner",
+    "vorname": "Felix",
+    "tisch": 5
+  },
+  {
+    "platz": 42,
+    "nachname": "Cadonau",
+    "vorname": "Lara",
+    "tisch": 5
+  },
+  {
+    "platz": 43,
+    "nachname": "Profanter",
+    "vorname": "Andrea",
+    "tisch": 5
+  },
+  {
+    "platz": 44,
+    "nachname": "Plangger",
+    "vorname": "Leonie",
+    "tisch": 5
+  },
+  {
+    "platz": 45,
+    "nachname": "Mair",
+    "vorname": "Patrick",
+    "tisch": 9
+  },
+  {
+    "platz": 46,
+    "nachname": "Ramoser",
+    "vorname": "Klaus",
+    "tisch": 3
+  },
+  {
+    "platz": 47,
+    "nachname": "Eberhart",
+    "vorname": "Eva",
+    "tisch": 5
+  },
+  {
+    "platz": 48,
+    "nachname": "Gamper",
+    "vorname": "Helen",
+    "tisch": 5
+  },
+  {
+    "platz": 49,
+    "nachname": "Innerebner",
+    "vorname": "Aaron",
+    "tisch": 8
+  },
+  {
+    "platz": 50,
+    "nachname": "Gemasser",
+    "vorname": "Felix",
+    "tisch": 12
+  },
+  {
+    "platz": 51,
+    "nachname": "Profanter",
+    "vorname": "Tommy",
+    "tisch": 1
+  },
+  {
+    "platz": 52,
+    "nachname": "Platzgummer",
+    "vorname": "Julian",
+    "tisch": 1
+  },
+  {
+    "platz": 53,
+    "nachname": "Maas",
+    "vorname": "Elisabeth",
+    "tisch": 3
+  },
+  {
+    "platz": 54,
+    "nachname": "Thöni",
+    "vorname": "Alexander",
+    "tisch": 6
+  },
+  {
+    "platz": 55,
+    "nachname": "Reinstadler",
+    "vorname": "Simon",
+    "tisch": 10
+  },
+  {
+    "platz": 56,
+    "nachname": "Bochet",
+    "vorname": "Jonas",
+    "tisch": 6
+  },
+  {
+    "platz": 57,
+    "nachname": "Pratzner",
+    "vorname": "Elias",
+    "tisch": 12
+  },
+  {
+    "platz": 58,
+    "nachname": "Thöni",
+    "vorname": "Jona",
+    "tisch": 6
+  },
+  {
+    "platz": 59,
+    "nachname": "De Stefani",
+    "vorname": "Antonio",
+    "tisch": 7
+  },
+  {
+    "platz": 60,
+    "nachname": "Piccolruaz",
+    "vorname": "Luis",
+    "tisch": 10
+  },
+  {
+    "platz": 61,
+    "nachname": "Rigo",
+    "vorname": "Luca",
+    "tisch": 1
+  },
+  {
+    "platz": 62,
+    "nachname": "Vaja",
+    "vorname": "Felix",
+    "tisch": 2
+  },
+  {
+    "platz": 63,
+    "nachname": "Werth",
+    "vorname": "Sophie",
+    "tisch": 7
+  },
+  {
+    "platz": 64,
+    "nachname": "Raffeiner",
+    "vorname": "Jonathan",
+    "tisch": 1
+  },
+  {
+    "platz": 65,
+    "nachname": "Wallnöfer",
+    "vorname": "Felix",
+    "tisch": 7
+  },
+  {
+    "platz": 66,
+    "nachname": "Wallnöfer",
+    "vorname": "Leo",
+    "tisch": 7
+  },
+  {
+    "platz": 67,
+    "nachname": "Cristofoletti",
+    "vorname": "Leo",
+    "tisch": 7
+  },
+  {
+    "platz": 68,
+    "nachname": "Oberhofer",
+    "vorname": "Daniel",
+    "tisch": 13
+  },
+  {
+    "platz": 69,
+    "nachname": "Lantschner",
+    "vorname": "Lukas",
+    "tisch": 1
+  },
+  {
+    "platz": 70,
+    "nachname": "Jocher",
+    "vorname": "Hannah",
+    "tisch": 5
+  },
+  {
+    "platz": 71,
+    "nachname": "Heiss",
+    "vorname": "Philipp",
+    "tisch": 9
+  },
+  {
+    "platz": 72,
+    "nachname": "Egger",
+    "vorname": "Moritz",
+    "tisch": 11
+  },
+  {
+    "platz": 73,
+    "nachname": "Gilg",
+    "vorname": "Tobias",
+    "tisch": 10
+  },
+  {
+    "platz": 74,
+    "nachname": "Gamper",
+    "vorname": "Michael",
+    "tisch": 9
+  },
+  {
+    "platz": 75,
+    "nachname": "Lechner",
+    "vorname": "Max",
+    "tisch": 8
+  },
+  {
+    "platz": 76,
+    "nachname": "Reisinger",
+    "vorname": "Paul",
+    "tisch": 8
+  },
+  {
+    "platz": 77,
+    "nachname": "Lutz",
+    "vorname": "Niclas",
+    "tisch": 6
+  },
+  {
+    "platz": 78,
+    "nachname": "Spögler",
+    "vorname": "Oliver",
+    "tisch": 13
+  },
+  {
+    "platz": 79,
+    "nachname": "De Stefani",
+    "vorname": "Leonardo",
+    "tisch": 13
+  },
+  {
+    "platz": 80,
+    "nachname": "Fonto",
+    "vorname": "Luca",
+    "tisch": 13
+  },
+  {
+    "platz": 81,
+    "nachname": "Niederfiniger",
+    "vorname": "Lukas",
+    "tisch": 12
+  },
+  {
+    "platz": 82,
+    "nachname": "Oberrauch",
+    "vorname": "Tobias",
+    "tisch": 2
+  },
+  {
+    "platz": 83,
+    "nachname": "Borriello",
+    "vorname": "Giovanni",
+    "tisch": 11
+  },
+  {
+    "platz": 84,
+    "nachname": "Borriello",
+    "vorname": "Viola",
+    "tisch": 11
+  },
+  {
+    "platz": 85,
+    "nachname": "Ungerer",
+    "vorname": "Rene",
+    "tisch": 9
+  },
+  {
+    "platz": 86,
+    "nachname": "Egger",
+    "vorname": "Gabriel",
+    "tisch": 11
+  },
+  {
+    "platz": 87,
+    "nachname": "Gamper",
+    "vorname": "Marie",
+    "tisch": 3
+  },
+  {
+    "platz": 88,
+    "nachname": "Schroffenegger",
+    "vorname": "Max",
+    "tisch": 2
+  },
+  {
+    "platz": 89,
+    "nachname": "Lutz",
+    "vorname": "Noah",
+    "tisch": 10
+  },
+  {
+    "platz": 90,
+    "nachname": "Mock",
+    "vorname": "Anton",
+    "tisch": 8
+  },
+  {
+    "platz": 91,
+    "nachname": "Stecher",
+    "vorname": "Emil",
+    "tisch": 4
+  },
+  {
+    "platz": 92,
+    "nachname": "Bergmeister",
+    "vorname": "Philip",
+    "tisch": 10
+  },
+  {
+    "platz": 93,
+    "nachname": "Winkler",
+    "vorname": "Julian",
+    "tisch": 4
+  },
+  {
+    "platz": 94,
+    "nachname": "Wieser",
+    "vorname": "Elisas",
+    "tisch": 1
+  },
+  {
+    "platz": 95,
+    "nachname": "Thanei",
+    "vorname": "Paul",
+    "tisch": 10
+  },
+  {
+    "platz": 96,
+    "nachname": "Kollmann",
+    "vorname": "Nils Marian",
+    "tisch": 9
+  },
+  {
+    "platz": 97,
+    "nachname": "Ratschiller",
+    "vorname": "Alexander",
+    "tisch": 10
+  },
+  {
+    "platz": 98,
+    "nachname": "Resch",
+    "vorname": "Manuel",
+    "tisch": 12
+  },
+  {
+    "platz": 99,
+    "nachname": "Strobl",
+    "vorname": "David",
+    "tisch": 1
+  },
+  {
+    "platz": 100,
+    "nachname": "Klotz",
+    "vorname": "Philipp",
+    "tisch": 13
+  },
+  {
+    "platz": 101,
+    "nachname": "Blaas",
+    "vorname": "Irina",
+    "tisch": 11
+  },
+  {
+    "platz": 102,
+    "nachname": "Wiedenhofer",
+    "vorname": "Tim",
+    "tisch": 7
+  },
+  {
+    "platz": 103,
+    "nachname": "Brunner",
+    "vorname": "Thomas",
+    "tisch": 10
+  },
+  {
+    "platz": 104,
+    "nachname": "Egger",
+    "vorname": "Moritz",
+    "tisch": 11
+  },
+  {
+    "platz": 105,
+    "nachname": "Egger",
+    "vorname": "Aileen",
+    "tisch": 11
+  },
+  {
+    "platz": 106,
+    "nachname": "Egger",
+    "vorname": "Gabriel",
+    "tisch": 11
+  },
+  {
+    "platz": 107,
+    "nachname": "Stecher",
+    "vorname": "Eva",
+    "tisch": 4
+  },
+  {
+    "platz": 108,
+    "nachname": "Borriello",
+    "vorname": "Giovanni",
+    "tisch": 11
+  },
+  {
+    "platz": 109,
+    "nachname": "Gander",
+    "vorname": "Jonas",
+    "tisch": 12
+  },
+  {
+    "platz": 110,
+    "nachname": "Baumgartner",
+    "vorname": "Liam",
+    "tisch": 11
+  },
+  {
+    "platz": 114,
+    "nachname": "Riedl",
+    "vorname": "Alex",
+    "tisch": 12
+  },
+  {
+    "platz": 115,
+    "nachname": "Gander",
+    "vorname": "Jonas",
+    "tisch": 12
+  },
+  {
+    "platz": 116,
+    "nachname": "Amstein",
+    "vorname": "Jonas",
+    "tisch": 12
+  },
+  {
+    "platz": 117,
+    "nachname": "Schönthaler",
+    "vorname": "Alex",
+    "tisch": 6
+  },
+  {
+    "platz": 118,
+    "nachname": "Greis",
+    "vorname": "Tobias",
+    "tisch": 12
+  },
+  {
+    "platz": 119,
+    "nachname": "Perger",
+    "vorname": "Jakob",
+    "tisch": 8
+  },
+  {
+    "platz": 120,
+    "nachname": "Piccolruaz",
+    "vorname": "Laurin",
+    "tisch": 5
+  },
+  {
+    "platz": 121,
+    "nachname": "Klotz",
+    "vorname": "Philipp",
+    "tisch": 13
+  },
+  {
+    "platz": 122,
+    "nachname": "Schütz",
+    "vorname": "Jakob",
+    "tisch": 9
+  },
+  {
+    "platz": 123,
+    "nachname": "Stecher",
+    "vorname": "Julia",
+    "tisch": 4
+  },
+  {
+    "platz": 124,
+    "nachname": "Oberrauch",
+    "vorname": "Tobias",
+    "tisch": 2
+  },
+  {
+    "platz": 125,
+    "nachname": "Fonto",
+    "vorname": "Luca",
+    "tisch": 13
+  },
+  {
+    "platz": 126,
+    "nachname": "Mahut",
+    "vorname": "Alex",
+    "tisch": 13
+  },
+  {
+    "platz": 127,
+    "nachname": "Oberhofer",
+    "vorname": "Daniel",
+    "tisch": 13
+  },
+  {
+    "platz": 128,
+    "nachname": "De Stefani",
+    "vorname": "Leonardo",
+    "tisch": 13
+  },
+  {
+    "platz": 129,
+    "nachname": "Visintainer",
+    "vorname": "Vinzenz",
+    "tisch": 13
+  },
+  {
+    "platz": 130,
+    "nachname": "Stecher",
+    "vorname": "Marie",
+    "tisch": 4
+  },
+  {
+    "platz": 131,
+    "nachname": "Stecher",
+    "vorname": "Niklas",
+    "tisch": 12
+  },
+  {
+    "platz": 132,
+    "nachname": "Stocker",
+    "vorname": "Michael",
+    "tisch": 12
+  },
+  {
+    "platz": 133,
+    "nachname": "Strobl",
+    "vorname": "David",
+    "tisch": 6
+  },
+  {
+    "platz": 134,
+    "nachname": "Terleth",
+    "vorname": "Gabriel",
+    "tisch": 1
+  },
+  {
+    "platz": 135,
+    "nachname": "Thanei",
+    "vorname": "Paul",
+    "tisch": 10
+  },
+  {
+    "platz": 136,
+    "nachname": "Thöni",
+    "vorname": "Alexander",
+    "tisch": 6
+  },
+  {
+    "platz": 137,
+    "nachname": "Thöni",
+    "vorname": "Jona",
+    "tisch": 6
+  },
+  {
+    "platz": 138,
+    "nachname": "Thurin",
+    "vorname": "Fabian",
+    "tisch": 6
+  },
+  {
+    "platz": 139,
+    "nachname": "Tischler",
+    "vorname": "Felix",
+    "tisch": 6
+  },
+  {
+    "platz": 140,
+    "nachname": "Tschenett",
+    "vorname": "Benjamin",
+    "tisch": 6
+  }
+]
