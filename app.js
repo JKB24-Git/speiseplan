@@ -185,6 +185,8 @@
     allergens: [],    // Liste in der Reihenfolge von allergens.json
     allergenByCode: {},
     dishes: {},        // Name (getrimmt) -> { image, description } aus dishes.json
+    seatingPlans: {},   // geladene Sitzordnungen, nach Datum gecacht
+    seatingFiles: {},   // verfügbare Dateien aus sitzordnungen/index.txt
     weekData: {},
     historyFiles: [],
     pendingNavigation: null,
@@ -256,6 +258,40 @@
       });
     }
     state.dishes = map;
+  }
+
+  function setSeatingPlanIndex(text) {
+    state.seatingFiles = {};
+    String(text || "").split(/\r?\n/).forEach(function (line) {
+      var filename = line.trim();
+      if (/^\d{4}-\d{2}-\d{2}\.json$/.test(filename)) state.seatingFiles[filename.slice(0, 10)] = true;
+    });
+  }
+
+  function normalizeSeatingPlan(data) {
+    return Array.isArray(data) ? data.filter(function (person) {
+      return person && Number.isFinite(Number(person.platz)) && Number.isFinite(Number(person.tisch))
+        && String(person.vorname || "").trim() && String(person.nachname || "").trim();
+    }).map(function (person) {
+      return {
+        platz: Number(person.platz),
+        tisch: Number(person.tisch),
+        vorname: String(person.vorname).trim(),
+        nachname: String(person.nachname).trim()
+      };
+    }) : [];
+  }
+
+  function fetchSeatingPlan(date) {
+    if (!date || !state.seatingFiles[date]) return Promise.resolve(null);
+    if (Object.prototype.hasOwnProperty.call(state.seatingPlans, date)) return Promise.resolve(state.seatingPlans[date]);
+    return fetchJSON("sitzordnungen/" + date + ".json").then(function (data) {
+      state.seatingPlans[date] = normalizeSeatingPlan(data);
+      return state.seatingPlans[date];
+    }).catch(function () {
+      state.seatingPlans[date] = [];
+      return [];
+    });
   }
 
   /* ------------------------------------------------------------
@@ -715,6 +751,164 @@
     });
   }
 
+  /* ---------- Sitzplan beim gemeinsamen Essen ---------- */
+  var seatingDialog = null;
+
+  function renderSeatingPlan(query, sortMode, planDate) {
+    if (!seatingDialog) return;
+    var source = state.seatingPlans && state.seatingPlans[planDate];
+    var people = Array.isArray(source) ? source.slice() : [];
+    var needle = String(query || "").trim().toLocaleLowerCase("de");
+    var filtered = people.filter(function (person) {
+      return (person.vorname + " " + person.nachname + " " + person.platz + " " + person.tisch)
+        .toLocaleLowerCase("de").indexOf(needle) >= 0;
+    });
+    filtered.sort(sortMode === "number"
+      ? function (a, b) { return a.platz - b.platz || a.nachname.localeCompare(b.nachname, "de"); }
+      : function (a, b) { return a.nachname.localeCompare(b.nachname, "de") || a.vorname.localeCompare(b.vorname, "de") || a.platz - b.platz; });
+
+    seatingDialog.chart.textContent = "";
+    if (!people.length) {
+      seatingDialog.empty.hidden = false;
+      seatingDialog.content.hidden = true;
+      return;
+    }
+    seatingDialog.empty.hidden = true;
+    seatingDialog.content.hidden = false;
+    var grouped = {};
+    filtered.forEach(function (person) {
+      (grouped[person.tisch] || (grouped[person.tisch] = [])).push(person);
+    });
+    Object.keys(grouped).sort(function (a, b) { return Number(a) - Number(b); }).forEach(function (tableNumber) {
+      var table = el("section", "seatplan-table");
+      table.setAttribute("aria-label", "Tisch " + tableNumber);
+      var seats = grouped[tableNumber].slice().sort(function (a, b) { return a.platz - b.platz; });
+      var split = Math.ceil(seats.length / 2);
+      var topRow = el("div", "seatplan-seat-row");
+      var bottomRow = el("div", "seatplan-seat-row");
+      seats.forEach(function (person, index) {
+        (index < split ? topRow : bottomRow).appendChild(el("span", "seatplan-seat", String(person.platz)));
+      });
+      table.appendChild(topRow);
+      table.appendChild(el("div", "seatplan-table-label", "Tisch " + tableNumber));
+      table.appendChild(bottomRow);
+      seatingDialog.chart.appendChild(table);
+    });
+
+    seatingDialog.list.textContent = "";
+    if (!filtered.length) {
+      seatingDialog.list.appendChild(el("li", "seatplan-no-results", "Keine passenden Personen gefunden."));
+      return;
+    }
+    filtered.forEach(function (person) {
+      var row = el("li", "seatplan-person");
+      row.appendChild(el("span", "seatplan-person-name", person.vorname + " " + person.nachname));
+      row.appendChild(el("span", "seatplan-person-meta", "Nr. " + person.platz + " · Tisch " + person.tisch));
+      seatingDialog.list.appendChild(row);
+    });
+  }
+
+  function openSeatingPlan(planDate) {
+    if (!seatingDialog) {
+      var overlay = el("div", "detail-overlay seating-overlay");
+      overlay.hidden = true;
+      var dialog = el("div", "detail-dialog seatplan-dialog");
+      dialog.setAttribute("role", "dialog");
+      dialog.setAttribute("aria-modal", "true");
+      dialog.setAttribute("aria-labelledby", "seatplan-title");
+      dialog.tabIndex = -1;
+      var close = el("button", "detail-close", "✕");
+      close.type = "button";
+      close.setAttribute("aria-label", TEXT.detailClose);
+      close.addEventListener("click", closeSeatingPlan);
+      var title = el("h3", "detail-title", "Sitzplan – gemeinsames Abendessen");
+      title.id = "seatplan-title";
+      var empty = el("p", "seatplan-empty", "Für dieses gemeinsame Essen gibt es noch keinen Sitzplan.");
+      var content = el("div", "seatplan-content");
+      var chartTitle = el("h4", "seatplan-section-title", "Tische");
+      var chart = el("div", "seatplan-chart");
+      var peopleTitle = el("h4", "seatplan-section-title", "Personen");
+      var controls = el("div", "seatplan-controls");
+      var search = el("input", "seatplan-search");
+      search.type = "search";
+      search.placeholder = "Name oder Nummer suchen";
+      search.setAttribute("aria-label", "Sitzplan nach Name oder Nummer durchsuchen");
+      var sort = el("select", "seatplan-sort");
+      sort.setAttribute("aria-label", "Personen sortieren");
+      var nameOption = el("option", "", "Nach Name");
+      nameOption.value = "name";
+      var numberOption = el("option", "", "Nach Nummer");
+      numberOption.value = "number";
+      sort.appendChild(nameOption);
+      sort.appendChild(numberOption);
+      controls.appendChild(search);
+      controls.appendChild(sort);
+      var list = el("ul", "seatplan-people");
+      search.addEventListener("input", function () { renderSeatingPlan(search.value, sort.value, seatingDialog.date); });
+      sort.addEventListener("change", function () { renderSeatingPlan(search.value, sort.value, seatingDialog.date); });
+      content.appendChild(chartTitle);
+      content.appendChild(chart);
+      content.appendChild(peopleTitle);
+      content.appendChild(controls);
+      content.appendChild(list);
+      dialog.appendChild(close);
+      dialog.appendChild(title);
+      dialog.appendChild(empty);
+      dialog.appendChild(content);
+      overlay.appendChild(dialog);
+      overlay.addEventListener("click", function (event) { if (event.target === overlay) closeSeatingPlan(); });
+      document.body.appendChild(overlay);
+      seatingDialog = { overlay: overlay, dialog: dialog, close: close, empty: empty, content: content, chart: chart, list: list, search: search, sort: sort, date: null };
+    }
+    if (seatingDialog.date !== planDate) seatingDialog.search.value = "";
+    seatingDialog.date = planDate || null;
+    var hasFile = !!(seatingDialog.date && state.seatingFiles[seatingDialog.date]);
+    if (hasFile && !Object.prototype.hasOwnProperty.call(state.seatingPlans, seatingDialog.date)) {
+      seatingDialog.empty.textContent = "Sitzplan wird geladen …";
+      seatingDialog.empty.hidden = false;
+      seatingDialog.content.hidden = true;
+      fetchSeatingPlan(seatingDialog.date).then(function () {
+        if (seatingDialog && seatingDialog.date === planDate && !seatingDialog.overlay.hidden) {
+          seatingDialog.empty.textContent = "Für dieses gemeinsame Essen gibt es noch keinen Sitzplan.";
+          renderSeatingPlan(seatingDialog.search.value, seatingDialog.sort.value, seatingDialog.date);
+        }
+      });
+    } else {
+      seatingDialog.empty.textContent = "Für dieses gemeinsame Essen gibt es noch keinen Sitzplan.";
+      renderSeatingPlan(seatingDialog.search.value, seatingDialog.sort.value, seatingDialog.date);
+    }
+    seatingDialog.overlay.hidden = false;
+    document.body.classList.add("detail-open");
+    void seatingDialog.overlay.offsetWidth;
+    seatingDialog.overlay.classList.add("is-visible");
+    seatingDialog.dialog.focus();
+    document.addEventListener("keydown", onSeatingPlanKeydown);
+  }
+
+  function onSeatingPlanKeydown(event) {
+    if (!seatingDialog || seatingDialog.overlay.hidden) return;
+    if (event.key === "Escape") { closeSeatingPlan(); return; }
+    if (event.key !== "Tab") return;
+    var focusables = [seatingDialog.close, seatingDialog.search, seatingDialog.sort].filter(function (node) {
+      return node && !node.disabled && node.getClientRects().length > 0;
+    });
+    if (!focusables.length) return;
+    var index = focusables.indexOf(document.activeElement);
+    var next = event.shiftKey
+      ? (index <= 0 ? focusables.length - 1 : index - 1)
+      : (index < 0 || index === focusables.length - 1 ? 0 : index + 1);
+    event.preventDefault();
+    focusables[next].focus();
+  }
+
+  function closeSeatingPlan() {
+    if (!seatingDialog || seatingDialog.overlay.hidden) return;
+    seatingDialog.overlay.classList.remove("is-visible");
+    document.body.classList.remove("detail-open");
+    document.removeEventListener("keydown", onSeatingPlanKeydown);
+    window.setTimeout(function () { if (seatingDialog) seatingDialog.overlay.hidden = true; }, reduceMotion() ? 0 : 220);
+  }
+
   /* ---------- Foto/Beschreibung: Dialog beim Anklicken ---------- */
   var detail = null;
   var detailTrigger = null;
@@ -951,17 +1145,6 @@
       var shared = el("div", "shared-meal-banner");
       var heading = el("div", "shared-meal-heading");
       heading.appendChild(el("strong", "shared-meal-title", sharedTitle));
-      var info = el("button", "shared-meal-info");
-      var infoId = "shared-meal-info-" + dateKey(monday) + "-" + meal.key;
-      info.type = "button";
-      info.setAttribute("aria-label", "Info zur Sitzplatzreservierung");
-      info.setAttribute("aria-expanded", "false");
-      info.setAttribute("aria-describedby", infoId);
-      info.appendChild(el("span", "shared-meal-info-icon", "i"));
-      var tip = el("span", "shared-meal-tip", sharedDinner.reservationNote || "Bitte den Sitzplatz frühzeitig reservieren.");
-      tip.id = infoId;
-      info.appendChild(tip);
-      heading.appendChild(info);
       shared.appendChild(heading);
       shared.appendChild(el("div", "shared-meal-time", sharedTime));
       cell.appendChild(shared);
@@ -994,6 +1177,15 @@
         note.textContent = sharedDinner.note;
       }
       cell.appendChild(note);
+    }
+    if (sharedDinner) {
+      var seatPlanLink = el("button", "shared-meal-seatplan", sharedDinner.reservationNote || "Bitte den Sitzplatz frühzeitig reservieren.");
+      seatPlanLink.type = "button";
+      seatPlanLink.setAttribute("aria-haspopup", "dialog");
+      var dayIndexForPlan = DAY_NAMES.indexOf(String(day.day || "").trim().toLowerCase());
+      var sharedMealDate = dayIndexForPlan >= 0 ? dateKey(addDays(monday, dayIndexForPlan)) : null;
+      seatPlanLink.addEventListener("click", function () { openSeatingPlan(sharedMealDate); });
+      cell.appendChild(seatPlanLink);
     }
 
     return cell;
@@ -1203,10 +1395,10 @@
     if (ui.historyReturn) ui.historyReturn.addEventListener("click", returnToHistoryMenu);
     ui.hideAllergens.checked = !state.hideAllergens;
     document.body.classList.toggle("hide-allergens", state.hideAllergens);
-    if (ui.allergenScroll && ui.legendSection) {
+    if (ui.allergenScroll) {
       ui.allergenScroll.addEventListener("click", function () {
-        var top = ui.legendSection.getBoundingClientRect().top + window.scrollY - 16;
-        window.scrollTo({ top: Math.max(0, top), behavior: reduceMotion() ? "auto" : "smooth" });
+        ui.hideAllergens.checked = !ui.hideAllergens.checked;
+        ui.hideAllergens.dispatchEvent(new Event("change", { bubbles: true }));
       });
     }
     ui.hideAllergens.addEventListener("change", function () {
@@ -1390,7 +1582,8 @@
       showMessage(TEXT.noWeeks);
       return;
     }
-    return Promise.all([legendReady, dishesReady]).then(loadSchoolYearHistory).then(route);
+    var seatingReady = fetchText("sitzordnungen/index.txt").then(setSeatingPlanIndex).catch(function () { state.seatingFiles = {}; });
+    return Promise.all([legendReady, dishesReady, seatingReady]).then(loadSchoolYearHistory).then(route);
   }).catch(function (err) {
     if (window.console) console.error(err);
     ui.label.textContent = "";
