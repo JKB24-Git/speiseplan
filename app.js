@@ -753,20 +753,49 @@
   /* ---------- Sitzplan beim gemeinsamen Essen ---------- */
   var seatingDialog = null;
 
+  function animateSeatSearch() {
+    if (!seatingDialog || reduceMotion()) return;
+    var input = seatingDialog.search;
+    input.classList.remove("is-searching");
+    void input.offsetWidth;
+    input.classList.add("is-searching");
+    window.clearTimeout(seatingDialog.searchAnimationTimer);
+    seatingDialog.searchAnimationTimer = window.setTimeout(function () { input.classList.remove("is-searching"); }, 260);
+  }
+
   function renderSeatingPlan(query, sortMode, planDate) {
     if (!seatingDialog) return;
     var source = state.seatingPlans && state.seatingPlans[planDate];
     var people = Array.isArray(source) ? source.slice() : [];
     var needle = String(query || "").trim().toLocaleLowerCase("de");
     var filtered = people.filter(function (person) {
-      return (person.vorname + " " + person.nachname + " " + person.platz)
+      var matchesQuery = (person.vorname + " " + person.nachname + " " + person.platz)
         .toLocaleLowerCase("de").indexOf(needle) >= 0;
+      var matchesTable = seatingDialog.selectedTable === null || Math.ceil(person.platz / 10) === seatingDialog.selectedTable;
+      return matchesQuery && matchesTable;
     });
-    filtered.sort(sortMode === "number"
-      ? function (a, b) { return a.platz - b.platz || a.nachname.localeCompare(b.nachname, "de"); }
-      : function (a, b) { return a.nachname.localeCompare(b.nachname, "de") || a.vorname.localeCompare(b.vorname, "de") || a.platz - b.platz; });
+    function relevance(person) {
+      if (!needle) return 0;
+      var first = person.vorname.toLocaleLowerCase("de");
+      var last = person.nachname.toLocaleLowerCase("de");
+      var full = first + " " + last;
+      if (first.indexOf(needle) === 0) return 0;
+      if (last.indexOf(needle) === 0) return 1;
+      if (first.indexOf(needle) >= 0) return 2;
+      if (last.indexOf(needle) >= 0) return 3;
+      if (String(person.platz).indexOf(needle) >= 0) return 4;
+      return full.indexOf(needle) >= 0 ? 5 : 6;
+    }
+    filtered.sort(function (a, b) {
+      var rank = relevance(a) - relevance(b);
+      if (rank) return rank;
+      if (sortMode === "number") return a.platz - b.platz || a.vorname.localeCompare(b.vorname, "de");
+      return a.vorname.localeCompare(b.vorname, "de") || a.nachname.localeCompare(b.nachname, "de") || a.platz - b.platz;
+    });
 
     seatingDialog.chart.textContent = "";
+    seatingDialog.search.classList.remove("has-seat-selection");
+    seatingDialog.dialog.classList.toggle("has-seatplan", people.length > 0);
     if (!people.length) {
       seatingDialog.empty.hidden = false;
       seatingDialog.content.hidden = true;
@@ -777,14 +806,38 @@
     var byPlace = {};
     var matchingPlaces = {};
     people.forEach(function (person) { byPlace[person.platz] = person; });
-    filtered.forEach(function (person) {
-      if (needle) matchingPlaces[person.platz] = true;
+    people.forEach(function (person) {
+      var matchesSearch = needle && (person.vorname + " " + person.nachname + " " + person.platz)
+        .toLocaleLowerCase("de").indexOf(needle) >= 0;
+      var matchesTable = seatingDialog.selectedTable !== null && Math.ceil(person.platz / 10) === seatingDialog.selectedTable;
+      if (matchesSearch || matchesTable) matchingPlaces[person.platz] = true;
     });
     var layout = el("div", "seatplan-layout");
     var tables = el("div", "seatplan-tables");
     [3, 2, 1, 6, 5, 4, 9, 8, 7, 12, 11, 10, 13, 14].forEach(function (tableNumber) {
       var table = el("section", "seatplan-table");
+      table.dataset.tableNumber = String(tableNumber);
+      if (seatingDialog.selectedTable === tableNumber) table.classList.add("is-table-selected");
       table.setAttribute("aria-label", "Tisch " + tableNumber);
+      table.tabIndex = 0;
+      table.setAttribute("role", "button");
+      table.setAttribute("aria-pressed", String(seatingDialog.selectedTable === tableNumber));
+      table.addEventListener("click", function (event) {
+        if (event.target.closest(".seatplan-seat")) return;
+        seatingDialog.selectedTable = seatingDialog.selectedTable === tableNumber ? null : tableNumber;
+        seatingDialog.selectedSeat = null;
+        seatingDialog.search.value = "";
+        seatingDialog.searchFilledBySeat = false;
+        seatingDialog.list.scrollTop = 0;
+        renderSeatingPlan(seatingDialog.search.value, seatingDialog.sort.value, seatingDialog.date);
+      });
+      table.addEventListener("keydown", function (event) {
+        if (event.target !== table) return;
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          table.click();
+        }
+      });
       var topRow = el("div", "seatplan-seat-row");
       var bottomRow = el("div", "seatplan-seat-row");
       var firstSeat = (tableNumber - 1) * 10 + 1;
@@ -792,12 +845,20 @@
       var bottomSeats = [firstSeat + 5, firstSeat + 6, firstSeat + 7, firstSeat + 8, firstSeat + 9];
       function addSeat(row, seatNumber) {
         var person = byPlace[seatNumber];
-        var seat = el(person ? "button" : "span", "seatplan-seat" + (person ? "" : " is-empty") + (matchingPlaces[seatNumber] ? " is-match" : ""), String(seatNumber));
+        var isSelected = seatingDialog.selectedSeat === seatNumber;
+        var seat = el(person ? "button" : "span", "seatplan-seat" + (person ? "" : " is-empty") + (matchingPlaces[seatNumber] ? " is-match" : "") + (isSelected ? " is-selected" : ""), String(seatNumber));
         if (person) {
           seat.type = "button";
           seat.title = person.vorname + " " + person.nachname + " suchen";
-          seat.addEventListener("click", function () {
-            seatingDialog.search.value = person.vorname + " " + person.nachname;
+          seat.addEventListener("click", function (event) {
+            event.stopPropagation();
+            if (seatingDialog.selectedSeat === seatNumber) {
+              seatingDialog.selectedSeat = null;
+              seatingDialog.searchFilledBySeat = false;
+            } else {
+              seatingDialog.selectedSeat = seatNumber;
+              seatingDialog.searchFilledBySeat = false;
+            }
             renderSeatingPlan(seatingDialog.search.value, seatingDialog.sort.value, seatingDialog.date);
           });
         }
@@ -813,29 +874,111 @@
       table.appendChild(bottomRow);
       tables.appendChild(table);
     });
-    var entrance = el("aside", "seatplan-entrance");
+    var entrance = el("div", "seatplan-entrance");
     entrance.setAttribute("aria-label", "Eingang Speisesaal");
-    entrance.appendChild(el("div", "seatplan-door", "← Eingang Speisesaal"));
-    entrance.appendChild(el("div", "seatplan-door", "← Eingang Speisesaal"));
+    var verticalEntrance = el("span", "seatplan-entrance-vertical");
+    verticalEntrance.appendChild(el("span", "seatplan-entrance-label", "Eingang"));
+    entrance.appendChild(verticalEntrance);
+    entrance.appendChild(el("span", "seatplan-entrance-horizontal"));
     layout.appendChild(tables);
     layout.appendChild(entrance);
     seatingDialog.chart.appendChild(layout);
+    seatingDialog.layout = layout;
+    function positionEntrance() {
+      var tableOne = tables.querySelector('[data-table-number="1"]');
+      if (!tableOne || !entrance.isConnected) return;
+      var layoutRect = layout.getBoundingClientRect();
+      var tableRect = tableOne.getBoundingClientRect();
+      if (!layoutRect.width || !layoutRect.height || !layout.offsetWidth || !layout.offsetHeight) return;
+      var scaleX = layoutRect.width / layout.offsetWidth;
+      var scaleY = layoutRect.height / layout.offsetHeight;
+      var tableRight = (tableRect.right - layoutRect.left) / scaleX;
+      var tableTop = (tableRect.top - layoutRect.top) / scaleY;
+      var peoplePanel = layout.closest(".seatplan-content").querySelector(".seatplan-people-panel");
+      var peopleRect = peoplePanel.getBoundingClientRect();
+      var peopleLeft = (peopleRect.left - layoutRect.left) / scaleX;
+      var x = window.matchMedia("(max-width: 859px)").matches
+        ? tableRight + 10
+        : tableRight + (peopleLeft - tableRight) / 2;
+      var startY = tableTop - 10;
+      var endY = (tableRect.bottom - layoutRect.top) / scaleY + Math.max(6, tableOne.offsetHeight * 0.04);
+      var seat = tableOne.querySelector(".seatplan-seat");
+      var lineLength = seat ? Math.max(42, seat.offsetWidth * 2.5) : 78;
+      var vertical = entrance.querySelector(".seatplan-entrance-vertical");
+      var horizontal = entrance.querySelector(".seatplan-entrance-horizontal");
+      var label = entrance.querySelector(".seatplan-entrance-label");
+      vertical.style.left = x + "px";
+      vertical.style.right = "auto";
+      vertical.style.top = startY + "px";
+      vertical.style.height = Math.max(0, endY - startY) + "px";
+      horizontal.style.left = Math.max(0, x - lineLength) + "px";
+      horizontal.style.right = "auto";
+      horizontal.style.top = endY + "px";
+      horizontal.style.bottom = "auto";
+      horizontal.style.width = lineLength + "px";
+      label.style.top = (tableTop - label.offsetHeight - 2 - startY) + "px";
+    }
+    positionEntrance();
+    seatingDialog.positionEntrance = positionEntrance;
+    if (window.ResizeObserver && !seatingDialog.overlay.hidden) {
+      if (seatingDialog.entranceObserver) seatingDialog.entranceObserver.disconnect();
+      seatingDialog.entranceObserver = new ResizeObserver(positionEntrance);
+      seatingDialog.entranceObserver.observe(layout);
+      var observedTableOne = tables.querySelector('[data-table-number="1"]');
+      if (observedTableOne) seatingDialog.entranceObserver.observe(observedTableOne);
+    }
 
     seatingDialog.list.textContent = "";
     if (!filtered.length) {
       seatingDialog.list.appendChild(el("li", "seatplan-no-results", "Keine passenden Personen gefunden."));
-      return;
     }
-    filtered.forEach(function (person) {
+    function appendPerson(person, separate) {
       var tableNumber = Math.ceil(person.platz / 10);
-      var row = el("li", "seatplan-person");
-      row.appendChild(el("span", "seatplan-person-name", person.vorname + " " + person.nachname));
-      row.appendChild(el("span", "seatplan-person-meta", "Platz " + person.platz + " · Tisch " + tableNumber));
+      var row = el("li", "seatplan-person" + (separate ? " is-seat-selection" : ""));
+      var button = el("button", "seatplan-person-button" + (seatingDialog.selectedSeat === person.platz ? " is-selected" : ""));
+      button.type = "button";
+      button.setAttribute("aria-pressed", String(seatingDialog.selectedSeat === person.platz));
+      button.appendChild(el("span", "seatplan-person-name", person.vorname + " " + person.nachname));
+      button.appendChild(el("span", "seatplan-person-meta", "Platz " + person.platz + " · Tisch " + tableNumber));
+      button.addEventListener("click", function () {
+        seatingDialog.selectedSeat = seatingDialog.selectedSeat === person.platz ? null : person.platz;
+        seatingDialog.searchFilledBySeat = false;
+        renderSeatingPlan(seatingDialog.search.value, seatingDialog.sort.value, seatingDialog.date);
+      });
+      row.appendChild(button);
       seatingDialog.list.appendChild(row);
-    });
+    }
+    filtered.forEach(function (person) { appendPerson(person, false); });
+    var selectedPerson = people.find(function (person) { return person.platz === seatingDialog.selectedSeat; });
+    var selectedIsInResults = selectedPerson && filtered.some(function (person) { return person.platz === selectedPerson.platz; });
+    if (selectedPerson && !selectedIsInResults) appendPerson(selectedPerson, true);
+    if (seatingDialog.selectedSeat !== null) {
+      var selectedButton = seatingDialog.list.querySelector('.seatplan-person-button[aria-pressed="true"]');
+      if (selectedButton) {
+        var listRect = seatingDialog.list.getBoundingClientRect();
+        var buttonRect = selectedButton.getBoundingClientRect();
+        var targetTop = seatingDialog.list.scrollTop + buttonRect.top - listRect.top - (seatingDialog.list.clientHeight - buttonRect.height) / 2;
+        var list = seatingDialog.list;
+        if (reduceMotion()) {
+          list.scrollTop = targetTop;
+        } else {
+          var startTop = list.scrollTop;
+          var startedAt = 0;
+          var duration = 280;
+          function stepScroll(timestamp) {
+            if (!startedAt) startedAt = timestamp;
+            var progress = Math.min(1, (timestamp - startedAt) / duration);
+            var eased = progress < 0.5 ? 4 * progress * progress * progress : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+            list.scrollTop = startTop + (targetTop - startTop) * eased;
+            if (progress < 1) window.requestAnimationFrame(stepScroll);
+          }
+          window.requestAnimationFrame(stepScroll);
+        }
+      }
+    }
   }
 
-  function openSeatingPlan(planDate) {
+  function openSeatingPlan(planDate, planTime) {
     if (!seatingDialog) {
       var overlay = el("div", "detail-overlay seating-overlay");
       overlay.hidden = true;
@@ -848,49 +991,75 @@
       close.type = "button";
       close.setAttribute("aria-label", TEXT.detailClose);
       close.addEventListener("click", closeSeatingPlan);
-      var title = el("h3", "detail-title", "Sitzplan – gemeinsames Abendessen");
+      var heading = el("div", "seatplan-heading");
+      var title = el("h3", "seatplan-title", "Sitzplan");
       title.id = "seatplan-title";
+      var dateTime = el("p", "seatplan-date-time");
+      heading.appendChild(title);
+      heading.appendChild(dateTime);
       var empty = el("p", "seatplan-empty", "Für dieses gemeinsame Essen gibt es noch keinen Sitzplan.");
       var content = el("div", "seatplan-content");
-      var chartTitle = el("h4", "seatplan-section-title seatplan-chart-title", "Tischplan");
       var chart = el("div", "seatplan-chart");
+      var peoplePanel = el("div", "seatplan-people-panel");
       var peopleTitle = el("h4", "seatplan-section-title seatplan-people-title", "Personen");
       var controls = el("div", "seatplan-controls");
       var search = el("input", "seatplan-search");
       search.type = "search";
-      search.placeholder = "Name oder Platznummer suchen";
+      search.placeholder = "Name/Platz suchen";
       search.setAttribute("aria-label", "Personen nach Name oder Platznummer durchsuchen");
       var sort = el("select", "seatplan-sort");
       sort.setAttribute("aria-label", "Personen sortieren");
-      var nameOption = el("option", "", "Nach Name");
+      var nameOption = el("option", "", "Vorname");
       nameOption.value = "name";
-      var numberOption = el("option", "", "Nach Nummer");
+      var numberOption = el("option", "", "Platznummer");
       numberOption.value = "number";
       sort.appendChild(nameOption);
       sort.appendChild(numberOption);
+      var sortWrap = el("div", "seatplan-sort-wrap");
+      sortWrap.appendChild(sort);
       controls.appendChild(search);
-      controls.appendChild(sort);
+      controls.appendChild(sortWrap);
+      function updateSortOptionLabel() {
+        numberOption.textContent = sort.getBoundingClientRect().width >= 125 ? "Platznummer" : "Platznr.";
+      }
+      if (window.ResizeObserver) new ResizeObserver(updateSortOptionLabel).observe(sort);
+      window.requestAnimationFrame(updateSortOptionLabel);
       var list = el("ul", "seatplan-people");
-      search.addEventListener("input", function () { renderSeatingPlan(search.value, sort.value, seatingDialog.date); });
+      search.addEventListener("input", function () {
+        seatingDialog.selectedSeat = null;
+        seatingDialog.selectedTable = null;
+        seatingDialog.searchFilledBySeat = false;
+        animateSeatSearch();
+        renderSeatingPlan(search.value, sort.value, seatingDialog.date);
+      });
       sort.addEventListener("change", function () { renderSeatingPlan(search.value, sort.value, seatingDialog.date); });
-      content.appendChild(chartTitle);
       content.appendChild(chart);
-      content.appendChild(peopleTitle);
-      content.appendChild(controls);
-      content.appendChild(list);
+      peoplePanel.appendChild(peopleTitle);
+      peoplePanel.appendChild(controls);
+      peoplePanel.appendChild(list);
+      content.appendChild(peoplePanel);
       dialog.appendChild(close);
-      dialog.appendChild(title);
+      dialog.appendChild(heading);
       dialog.appendChild(empty);
       dialog.appendChild(content);
       overlay.appendChild(dialog);
       overlay.addEventListener("click", function (event) { if (event.target === overlay) closeSeatingPlan(); });
       document.body.appendChild(overlay);
-      seatingDialog = { overlay: overlay, dialog: dialog, close: close, empty: empty, content: content, chart: chart, list: list, search: search, sort: sort, date: null };
+      seatingDialog = { overlay: overlay, dialog: dialog, close: close, empty: empty, content: content, chart: chart, list: list, search: search, sort: sort, dateTime: dateTime, date: null, selectedSeat: null, selectedTable: null, searchFilledBySeat: false, searchAnimationTimer: null };
     }
-    if (seatingDialog.date !== planDate) seatingDialog.search.value = "";
+    if (seatingDialog.date !== planDate) {
+      seatingDialog.search.value = "";
+      seatingDialog.selectedSeat = null;
+      seatingDialog.selectedTable = null;
+      seatingDialog.searchFilledBySeat = false;
+    }
     seatingDialog.date = planDate || null;
+    seatingDialog.dateTime.textContent = planDate
+      ? formatDate(dateFromFile(planDate + ".json")) + (planTime ? " · " + planTime : "")
+      : (planTime || "");
     var hasFile = !!(seatingDialog.date && state.seatingFiles[seatingDialog.date]);
     if (hasFile && !Object.prototype.hasOwnProperty.call(state.seatingPlans, seatingDialog.date)) {
+      seatingDialog.dialog.classList.remove("has-seatplan");
       seatingDialog.empty.textContent = "Sitzplan wird geladen …";
       seatingDialog.empty.hidden = false;
       seatingDialog.content.hidden = true;
@@ -908,6 +1077,17 @@
     document.body.classList.add("detail-open");
     void seatingDialog.overlay.offsetWidth;
     seatingDialog.overlay.classList.add("is-visible");
+    window.requestAnimationFrame(function () {
+      if (seatingDialog && seatingDialog.positionEntrance) {
+        seatingDialog.positionEntrance();
+        window.requestAnimationFrame(function () {
+          if (seatingDialog && seatingDialog.positionEntrance) seatingDialog.positionEntrance();
+        });
+        window.setTimeout(function () {
+          if (seatingDialog && seatingDialog.positionEntrance) seatingDialog.positionEntrance();
+        }, 240);
+      }
+    });
     seatingDialog.dialog.focus();
     document.addEventListener("keydown", onSeatingPlanKeydown);
   }
@@ -933,6 +1113,10 @@
     seatingDialog.overlay.classList.remove("is-visible");
     document.body.classList.remove("detail-open");
     document.removeEventListener("keydown", onSeatingPlanKeydown);
+    seatingDialog.search.value = "";
+    seatingDialog.selectedSeat = null;
+    seatingDialog.selectedTable = null;
+    seatingDialog.searchFilledBySeat = false;
     window.setTimeout(function () { if (seatingDialog) seatingDialog.overlay.hidden = true; }, reduceMotion() ? 0 : 220);
   }
 
@@ -1148,7 +1332,10 @@
           reservationNote: explicitSharedDinner && explicitSharedDinner.reservationNote || "Bitte den Sitzplatz frühzeitig reservieren.",
           note: explicitSharedDinner && explicitSharedDinner.note || (afterIndex >= 0 ? items[afterIndex].name : "")
         };
-        items = items.filter(function (_, index) { return index !== announcementIndex && index !== afterIndex; });
+        items = items.filter(function (item, index) {
+          if (index === announcementIndex || index === afterIndex) return false;
+          return !(sharedDinner && item && typeof item.name === "string" && /^Salat vom Buffet$/i.test(item.name.trim()));
+        });
       }
     }
 
@@ -1159,6 +1346,7 @@
 
     var cell = el("div", "meal meal-" + meal.key + (isNext ? " is-next" : ""));
     var sharedTime = "18:30";
+    var sharedMealDate = null;
     if (sharedDinner) {
       var rawSharedTitle = sharedDinner.title || "Gemeinsames Abendessen";
       var timeMatch = String(sharedDinner.time || rawSharedTitle).match(/(\d{1,2})[.:](\d{2})/);
@@ -1170,6 +1358,18 @@
 
       cell.classList.add("is-shared");
       var shared = el("div", "shared-meal-banner");
+      var sharedDayIndex = DAY_NAMES.indexOf(String(day.day || "").trim().toLowerCase());
+      sharedMealDate = sharedDayIndex >= 0 ? dateKey(addDays(monday, sharedDayIndex)) : null;
+      shared.setAttribute("role", "button");
+      shared.tabIndex = 0;
+      shared.setAttribute("aria-label", sharedTitle + " " + sharedTime + " – Sitzplan öffnen");
+      shared.addEventListener("click", function () { openSeatingPlan(sharedMealDate, sharedTime); });
+      shared.addEventListener("keydown", function (event) {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openSeatingPlan(sharedMealDate, sharedTime);
+        }
+      });
       var heading = el("div", "shared-meal-heading");
       heading.appendChild(el("strong", "shared-meal-title", sharedTitle));
       shared.appendChild(heading);
@@ -1197,9 +1397,9 @@
       var note = el("p", "shared-meal-note");
       var colonAt = String(sharedDinner.note).indexOf(":");
       if (colonAt >= 0) {
-        note.appendChild(document.createTextNode(String(sharedDinner.note).slice(0, colonAt + 1)));
+        note.appendChild(el("strong", "shared-meal-note-heading", String(sharedDinner.note).slice(0, colonAt + 1)));
         note.appendChild(el("br"));
-        note.appendChild(document.createTextNode(String(sharedDinner.note).slice(colonAt + 1).trim()));
+        note.appendChild(el("span", "shared-meal-note-item", String(sharedDinner.note).slice(colonAt + 1).trim()));
       } else {
         note.textContent = sharedDinner.note;
       }
@@ -1209,9 +1409,7 @@
       var seatPlanLink = el("button", "shared-meal-seatplan", sharedDinner.reservationNote || "Bitte den Sitzplatz frühzeitig reservieren.");
       seatPlanLink.type = "button";
       seatPlanLink.setAttribute("aria-haspopup", "dialog");
-      var dayIndexForPlan = DAY_NAMES.indexOf(String(day.day || "").trim().toLowerCase());
-      var sharedMealDate = dayIndexForPlan >= 0 ? dateKey(addDays(monday, dayIndexForPlan)) : null;
-      seatPlanLink.addEventListener("click", function () { openSeatingPlan(sharedMealDate); });
+      seatPlanLink.addEventListener("click", function () { openSeatingPlan(sharedMealDate, sharedTime); });
       cell.appendChild(seatPlanLink);
     }
 
@@ -1333,6 +1531,36 @@
         state.weekData[file] = data;
       }).catch(function () { state.weekData[file] = null; });
     }));
+  }
+
+  function nextSharedDinnerReservation() {
+    var now = new Date();
+    var candidates = [];
+    state.historyFiles.forEach(function (file) {
+      var week = state.weekData[file];
+      if (!week || !Array.isArray(week.days)) return;
+      var monday = mondayOf(dateFromFile(file));
+      week.days.forEach(function (day) {
+        if (!day || typeof day !== "object") return;
+        var explicit = day.sharedDinner && typeof day.sharedDinner === "object" ? day.sharedDinner : null;
+        var dinner = Array.isArray(day.dinner) ? day.dinner : [];
+        var announcement = dinner.find(function (item) {
+          return item && typeof item.name === "string" && /^Gemeinsames Abendessen\b/i.test(item.name.trim());
+        });
+        if (!explicit && !announcement) return;
+        var dayIndex = DAY_NAMES.indexOf(String(day.day || "").trim().toLowerCase());
+        if (dayIndex < 0) return;
+        var title = (explicit && (explicit.time || explicit.title)) || (announcement && announcement.name) || "18:30";
+        var timeMatch = String(title).match(/(\d{1,2})[.:](\d{2})/);
+        var time = timeMatch ? pad(Number(timeMatch[1])) + ":" + timeMatch[2] : "18:30";
+        var date = addDays(monday, dayIndex);
+        var at = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        at.setHours(Number(time.slice(0, 2)), Number(time.slice(3, 5)), 0, 0);
+        if (at > now) candidates.push({ date: date, time: time, at: at });
+      });
+    });
+    candidates.sort(function (a, b) { return a.at - b.at; });
+    return candidates.length ? candidates[0] : null;
   }
 
   function renderLegend() {
@@ -1513,6 +1741,12 @@
           var nextMealRow = ui.plan.querySelector(".meal.is-next");
           if (nextMealRow && file === newest) {
             nextMealRow.scrollIntoView({ block: "center", behavior: reduceMotion() ? "auto" : "smooth" });
+          }
+        }
+        if (ui.notice.hidden) {
+          var upcomingSharedDinner = nextSharedDinnerReservation();
+          if (upcomingSharedDinner) {
+            showNotice("Für das gemeinsame Abendessen am " + formatDate(upcomingSharedDinner.date) + " um " + upcomingSharedDinner.time + " bitte den Sitzplatz frühzeitig reservieren.");
           }
         }
       });
