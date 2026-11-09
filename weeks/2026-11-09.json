@@ -1,0 +1,75 @@
+{
+  "week": "09.11.2026 - 13.11.2026",
+  "days": [
+    {
+      "day": "Montag",
+      "lunch": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Kartoffelcremesuppe", "allergens": ["L", "G", "F"] },
+        { "name": "Rindsgulash mit Reis und Brokoli", "allergens": ["L", "F"] },
+        { "name": "Trauben", "allergens": [] }
+      ],
+      "dinner": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Kartoffelcremesuppe", "allergens": ["L", "G", "F"] },
+        { "name": "Fusilli-Nudel mit Thunfischsauce", "allergens": ["L", "F", "D"] },
+        { "name": "Panna cotta", "allergens": ["A", "C", "G"] }
+      ]
+    },
+    {
+      "day": "Dienstag",
+      "lunch": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Mozzarella und Tomaten", "allergens": ["G"] },
+        { "name": "Ravioli mit Spinat- Topfen an Tomatensauce", "allergens": ["A", "B", "C", "D", "F", "G", "H", "L", "M"] },
+        { "name": "Schokoschnitte", "allergens": ["C", "A", "G", "L"] }
+      ],
+      "dinner": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Mozzarella und Tomaten", "allergens": ["G"] },
+        { "name": "Gekochtes Rindfleisch, Salsa verde, Gemüsekartoffel", "allergens": ["L", "F", "M"] },
+        { "name": "Banane", "allergens": [] }
+      ]
+    },
+    {
+      "day": "Mittwoch",
+      "lunch": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Consommé mit Nudel und Fleisch", "allergens": ["A", "L", "F"] },
+        { "name": "Wiener Schnitzel mit Kartoffelsalat", "allergens": ["C", "A"] },
+        { "name": "Pfirsichkompott", "allergens": [] }
+      ],
+      "dinner": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Consommé mit Nudel und Fleisch", "allergens": ["A", "L", "F"] },
+        { "name": "Römische Griesnocken Tomatensauce", "allergens": ["A", "C", "G", "L", "F"] },
+        { "name": "Roulade", "allergens": ["C", "A", "G"] }
+      ]
+    },
+    {
+      "day": "Donnerstag",
+      "lunch": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Grillgemüse", "allergens": [] },
+        { "name": "Käseknödel mit Butter und Parmesan", "allergens": ["A", "C", "G"] },
+        { "name": "Joghurtcreme", "allergens": ["A", "C", "G"] }
+      ],
+      "dinner": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Grillgemüse", "allergens": [] },
+        { "name": "Nudel mit Bolognese-Sauce", "allergens": ["A", "L"] },
+        { "name": "Griespudding", "allergens": ["A", "C", "G"] }
+      ]
+    },
+    {
+      "day": "Freitag",
+      "lunch": [
+        { "name": "Salat vom Buffet", "allergens": [] },
+        { "name": "Tagessuppe", "allergens": [] },
+        { "name": "Barschfilet mit Bratkartoffel und Spinat", "allergens": ["D"] },
+        { "name": "Obst", "allergens": [] }
+      ],
+      "dinner": []
+    }
+  ]
+}
